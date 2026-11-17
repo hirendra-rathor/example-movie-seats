@@ -1,6 +1,6 @@
 # Milestone 1: Hold a complete selection of seats
 
-[All chapters](../README.md)
+[All chapters](../README.md) · Next: [Milestone 2](../milestone-2/README.md)
 
 **Checkpoint.** Implementation commit
 [`5bcba37`](https://github.com/hirendra-rathor/example-movie-seats/commit/5bcba370df64f4a8f06761b2f77cafd3460e542c)

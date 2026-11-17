@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1520" width="1400" height="1520" role="img" aria-labelledby="title desc" font-family="Arial, Helvetica, sans-serif">
+<title id="title">Recovering a lost hold reply and repeating a confirmation</title><desc id="desc">Milestone 2 collaboration. The booking client sends POST /holds for A3 and A4 with Idempotency-Key K. The reservation book checks the key and the seats inside one write transaction and commits reservation R together with K, but the 201 reply is lost. After the server restarts, GET /holds/K finds R, and a retried POST /holds with K returns 200 with the same R without inserting anything. The client then confirms R; that reply is also lost, and repeating the confirmation finds R already confirmed and returns 200 without a change. Blue means changed.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#435970"/></marker><marker id="arrow-muted" viewBox="0 0 10 10" refX="8.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7d8b99"/></marker></defs>
+<rect width="1400" height="1520" fill="white"/>
+<text x="28" y="43" font-size="29" font-weight="700" fill="#182f46" text-anchor="start">Recovering a lost hold reply and repeating a confirmation</text>
+<text x="28" y="75" font-size="17" font-weight="400" fill="#182f46" text-anchor="start">The key commits with the reservation, so it later proves whether the hold happened.</text>
+<rect x="1306" y="20" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="1343.5" y="36" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<rect x="400" y="92" width="580" height="588" rx="10" fill="#f3f6f9" stroke="#95a6b5" stroke-width="1.2" stroke-dasharray="7 4"/>
+<text x="414" y="114" font-size="13" font-weight="700" fill="#466078" text-anchor="start">MOVIE SEATS API PROCESS</text>
+<rect x="400" y="735" width="580" height="770" rx="10" fill="#f3f6f9" stroke="#95a6b5" stroke-width="1.2" stroke-dasharray="7 4"/>
+<text x="414" y="757" font-size="13" font-weight="700" fill="#466078" text-anchor="start">NEW PROCESS AFTER THE RESTART</text>
+<rect x="30.0" y="128" width="220" height="78" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="165.0" y="117" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="202.5" y="133" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="42.0" y="152" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">CALLER</text>
+<text x="42.0" y="180" font-size="18" font-weight="700" fill="#182f46" text-anchor="start">Booking client</text>
+<text x="42.0" y="198" font-size="13" font-weight="400" fill="#586674" text-anchor="start">generates and keeps key K</text>
+<path d="M140 206 V1496" stroke="#9aa9b8" stroke-width="1.6" stroke-dasharray="6 5" fill="none"/>
+<rect x="425.0" y="128" width="230" height="78" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="570.0" y="117" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="607.5" y="133" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="437.0" y="152" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">COMPONENT</text>
+<text x="437.0" y="180" font-size="18" font-weight="700" fill="#182f46" text-anchor="start">create_app routes</text>
+<text x="437.0" y="198" font-size="13" font-weight="400" fill="#586674" text-anchor="start">app.py</text>
+<path d="M540 206 V1496" stroke="#9aa9b8" stroke-width="1.6" stroke-dasharray="6 5" fill="none"/>
+<rect x="715.0" y="128" width="230" height="78" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="860.0" y="117" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="897.5" y="133" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="727.0" y="152" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">COMPONENT</text>
+<text x="727.0" y="180" font-size="18" font-weight="700" fill="#182f46" text-anchor="start">Reservation book</text>
+<text x="727.0" y="198" font-size="13" font-weight="400" fill="#586674" text-anchor="start">reservations.py</text>
+<path d="M830 206 V1496" stroke="#9aa9b8" stroke-width="1.6" stroke-dasharray="6 5" fill="none"/>
+<rect x="995.0" y="128" width="230" height="78" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="1140.0" y="117" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="1177.5" y="133" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="1007.0" y="152" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">STORE</text>
+<text x="1007.0" y="180" font-size="18" font-weight="700" fill="#182f46" text-anchor="start">SQLite database</text>
+<text x="1007.0" y="198" font-size="13" font-weight="400" fill="#586674" text-anchor="start">schema version 2</text>
+<path d="M1110 206 V1496" stroke="#9aa9b8" stroke-width="1.6" stroke-dasharray="6 5" fill="none"/>
+<path d="M140 285 H534" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="152" y="277" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">Idempotency-Key: K</text>
+<text x="152" y="259" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">POST /holds {seats: [A3, A4]}</text>
+<path d="M540 327 H824" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="685.0" y="319" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">place_hold([A3, A4], key=K)</text>
+<path d="M830 369 H1104" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="970.0" y="361" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">BEGIN IMMEDIATE; key K? none</text>
+<path d="M830 411 H1104" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="970.0" y="403" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">A3, A4 unreleased? none</text>
+<path d="M830 453 H1104" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="970.0" y="445" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">INSERT R with key K; COMMIT</text>
+<path d="M830 495 H546" fill="none" stroke="#435970" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+<text x="685.0" y="487" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">R, newly held</text>
+<path d="M540 537 H210" fill="none" stroke="#435970" stroke-width="2" stroke-dasharray="7 5"/>
+<path d="M201 528 L219 546 M201 546 L219 528" stroke="#c2410c" stroke-width="3" stroke-linecap="round"/>
+<text x="330" y="529" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">201 {reservation_id: R}  lost</text>
+<rect x="1135" y="430" width="245" height="64" rx="5" fill="#fff7e6" stroke="#d9a441" stroke-width="1.5"/>
+<text x="1145" y="450" font-size="14" font-weight="400" fill="#192e42" text-anchor="start">R and K commit together,</text>
+<text x="1145" y="469" font-size="14" font-weight="400" fill="#192e42" text-anchor="start">or neither is stored.</text>
+<rect x="1135" y="560" width="245" height="64" rx="5" fill="#fff7e6" stroke="#d9a441" stroke-width="1.5"/>
+<text x="1145" y="580" font-size="14" font-weight="400" fill="#192e42" text-anchor="start">The client never sees R.</text>
+<text x="1145" y="599" font-size="14" font-weight="400" fill="#192e42" text-anchor="start">It still has K.</text>
+<rect x="16" y="690" width="1368" height="36" rx="5" fill="#eef2f6"/>
+<text x="700.0" y="713.0" font-size="15" font-weight="700" fill="#182f46" text-anchor="middle">The server restarts. Reservation R and key K stay in the SQLite file.</text>
+<path d="M140 800 H534" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="152" y="792" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">GET /holds/K</text>
+<path d="M540 842 H824" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="685.0" y="834" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">find_by_key(K)</text>
+<path d="M830 884 H1104" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="970.0" y="876" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">SELECT by request_key K → R</text>
+<path d="M540 926 H146" fill="none" stroke="#435970" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+<text x="152" y="918" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">200 {reservation_id: R, status: held}</text>
+<path d="M140 982 H534" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="152" y="974" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">or retry: POST /holds, same seats, key K</text>
+<path d="M540 1024 H824" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="685.0" y="1016" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">place_hold([A3, A4], key=K)</text>
+<path d="M830 1066 H1104" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="970.0" y="1058" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">key K → R; same seats; no insert</text>
+<path d="M540 1108 H146" fill="none" stroke="#435970" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+<text x="152" y="1100" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">200 {reservation_id: R}  (replay)</text>
+<path d="M140 1164 H534" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="152" y="1156" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">POST /reservations/R/confirm</text>
+<path d="M540 1206 H824" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="685.0" y="1198" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">confirm(R)</text>
+<path d="M830 1248 H1104" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="970.0" y="1240" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">held → confirmed; COMMIT</text>
+<path d="M540 1290 H210" fill="none" stroke="#435970" stroke-width="2" stroke-dasharray="7 5"/>
+<path d="M201 1281 L219 1299 M201 1299 L219 1281" stroke="#c2410c" stroke-width="3" stroke-linecap="round"/>
+<text x="330" y="1282" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">200 {status: confirmed}  lost</text>
+<path d="M140 1346 H534" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="152" y="1338" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">repeat: POST /reservations/R/confirm</text>
+<path d="M540 1388 H824" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="685.0" y="1380" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">confirm(R)</text>
+<path d="M830 1430 H1104" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="970.0" y="1422" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">already confirmed; no change</text>
+<path d="M540 1472 H146" fill="none" stroke="#435970" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arrow)"/>
+<text x="152" y="1464" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">200 {status: confirmed}</text>
+<rect x="1135" y="1010" width="245" height="64" rx="5" fill="#fff7e6" stroke="#d9a441" stroke-width="1.5"/>
+<text x="1145" y="1030" font-size="14" font-weight="400" fill="#192e42" text-anchor="start">Checked inside the write</text>
+<text x="1145" y="1049" font-size="14" font-weight="400" fill="#192e42" text-anchor="start">lock: never a second hold.</text>
+<rect x="1135" y="1405" width="245" height="64" rx="5" fill="#fff7e6" stroke="#d9a441" stroke-width="1.5"/>
+<text x="1145" y="1425" font-size="14" font-weight="400" fill="#192e42" text-anchor="start">A repeat sees the stored</text>
+<text x="1145" y="1444" font-size="14" font-weight="400" fill="#192e42" text-anchor="start">status and changes nothing.</text>
+</svg>

@@ -39,3 +39,4 @@ branch is pushed; the full commit IDs identify the same checkpoints locally.
 ## Chapters
 
 1. [Hold a complete selection of seats](milestone-1/README.md)
+2. [Confirm or cancel a hold and recover a lost reply](milestone-2/README.md)

@@ -1,0 +1,202 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1510 985" width="1510" height="985" role="img" aria-labelledby="title desc" font-family="Arial, Helvetica, sans-serif">
+<title id="title">Confirm or cancel a hold and recover a lost reply</title><desc id="desc">Milestone 2 overview. A booking client settles a hold by confirming or cancelling it, and recovers from a lost reply by retrying with the same idempotency key, even after a restart. The Movie Seats API, its routes, the reservation book, database setup, the reservation and reserved-seat state and the schema version change; the Idempotency-Key header and four checks are new. Gray means context, blue means changed and green means new.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#435970"/></marker><marker id="arrow-muted" viewBox="0 0 10 10" refX="8.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7d8b99"/></marker></defs>
+<rect width="1510" height="985" fill="white"/>
+<text x="28" y="43" font-size="29" font-weight="700" fill="#182f46" text-anchor="start">Confirm or cancel a hold and recover a lost reply</text>
+<text x="28" y="75" font-size="17" font-weight="400" fill="#182f46" text-anchor="start">Proposed milestone 2   •   Status moves one way, and a client key ties every retry to its first hold.</text>
+<rect x="1446" y="20" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="1468.5" y="36" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<rect x="1363" y="20" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="1400.5" y="36" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<rect x="16" y="108" width="241" height="857" rx="5" fill="#eff4f8"/>
+<text x="29" y="138" font-size="17" font-weight="700" fill="#182f46" text-anchor="start">Domain</text>
+<rect x="265" y="108" width="241" height="857" rx="5" fill="#f5f7fa"/>
+<text x="278" y="138" font-size="17" font-weight="700" fill="#182f46" text-anchor="start">Architecture</text>
+<rect x="514" y="108" width="241" height="857" rx="5" fill="#eff4f8"/>
+<text x="527" y="138" font-size="17" font-weight="700" fill="#182f46" text-anchor="start">Subsystem Design</text>
+<rect x="763" y="108" width="241" height="857" rx="5" fill="#f5f7fa"/>
+<text x="776" y="138" font-size="17" font-weight="700" fill="#182f46" text-anchor="start">Subsystem Interfaces</text>
+<rect x="1012" y="108" width="241" height="857" rx="5" fill="#eff4f8"/>
+<text x="1025" y="138" font-size="17" font-weight="700" fill="#182f46" text-anchor="start">State Management</text>
+<rect x="1261" y="108" width="241" height="857" rx="5" fill="#f5f7fa"/>
+<text x="1274" y="138" font-size="17" font-weight="700" fill="#182f46" text-anchor="start">Verification</text>
+<rect x="25" y="160" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="192" y="149" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="214.5" y="165" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="37" y="184" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">RULE</text>
+<text x="37" y="212" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">One-way status</text>
+<text x="37" y="241" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">held → confirmed or</text>
+<text x="37" y="263" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">cancelled; repeats no-op.</text>
+<rect x="25" y="320" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="192" y="309" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="214.5" y="325" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="37" y="344" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">INTENTION</text>
+<text x="37" y="372" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Settle the hold</text>
+<text x="37" y="401" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Confirm the booking, or</text>
+<text x="37" y="423" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">free seats for others.</text>
+<rect x="25" y="480" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="192" y="469" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="214.5" y="485" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="37" y="504" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">CAPABILITY</text>
+<text x="37" y="532" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Settle and recover</text>
+<text x="37" y="561" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Confirm, cancel, and find</text>
+<text x="37" y="583" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">a hold again by its key.</text>
+<rect x="25" y="640" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="192" y="629" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="214.5" y="645" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="37" y="664" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">INTENTION</text>
+<text x="37" y="692" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Retry safely</text>
+<text x="37" y="721" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Retry after a lost reply,</text>
+<text x="37" y="743" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">even across a restart.</text>
+<rect x="25" y="800" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="192" y="789" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="214.5" y="805" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="37" y="824" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">RULE</text>
+<text x="37" y="852" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">One key, one hold</text>
+<text x="37" y="881" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Retrying a key returns</text>
+<text x="37" y="903" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">the hold it made first.</text>
+<rect x="274" y="160" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="411" y="149" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="448.5" y="165" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="286" y="184" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">PARTICIPANT</text>
+<text x="286" y="212" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Booking client</text>
+<text x="286" y="241" font-size="15" font-weight="400" fill="#586674" text-anchor="start">Today: sends seats only.</text>
+<text x="286" y="263" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Proposed: adds a hold key.</text>
+<rect x="274" y="320" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="411" y="309" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="448.5" y="325" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="286" y="344" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">PARTICIPANT</text>
+<text x="286" y="372" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Movie Seats API</text>
+<text x="286" y="401" font-size="15" font-weight="400" fill="#586674" text-anchor="start">Today: holds, lookups.</text>
+<text x="286" y="423" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Proposed: + confirm, cancel.</text>
+<rect x="274" y="640" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="411" y="629" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="448.5" y="645" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="286" y="664" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">STORE</text>
+<text x="286" y="692" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">SQLite database</text>
+<text x="286" y="721" font-size="15" font-weight="400" fill="#586674" text-anchor="start">Today: schema version 1.</text>
+<text x="286" y="743" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Proposed: upgraded to 2.</text>
+<rect x="523" y="480" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="660" y="469" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="697.5" y="485" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="535" y="504" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">COMPONENT</text>
+<text x="535" y="532" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">create_app routes</text>
+<text x="535" y="561" font-size="15" font-weight="400" fill="#586674" text-anchor="start">Today: three JSON routes.</text>
+<text x="535" y="583" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Proposed: three more.</text>
+<rect x="523" y="640" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="660" y="629" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="697.5" y="645" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="535" y="664" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">COMPONENT</text>
+<text x="535" y="692" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Reservation book</text>
+<text x="535" y="721" font-size="15" font-weight="400" fill="#586674" text-anchor="start">Today: holds and lookups.</text>
+<text x="535" y="743" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Proposed: + settle, keys.</text>
+<rect x="523" y="800" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="660" y="789" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="697.5" y="805" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="535" y="824" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">COMPONENT</text>
+<text x="535" y="852" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Database setup</text>
+<text x="535" y="881" font-size="15" font-weight="400" fill="#586674" text-anchor="start">Today: creates version 1.</text>
+<text x="535" y="903" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Proposed: migrates 1 → 2.</text>
+<rect x="772" y="160" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="939" y="149" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="961.5" y="165" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="784" y="184" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">INTERFACE</text>
+<text x="784" y="212" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Idempotency-Key</text>
+<text x="784" y="241" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Header on POST /holds;</text>
+<text x="784" y="263" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">repeat → 200, same ID.</text>
+<rect x="772" y="320" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="909" y="309" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="946.5" y="325" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="784" y="344" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">INTERFACE</text>
+<text x="784" y="372" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Reservation API</text>
+<text x="784" y="401" font-size="15" font-weight="400" fill="#586674" text-anchor="start">Today: seats, hold, lookup.</text>
+<text x="784" y="423" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Proposed: + settle, recover.</text>
+<rect x="1021" y="480" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="1158" y="469" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="1195.5" y="485" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="1033" y="504" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">STATE ELEMENT</text>
+<text x="1033" y="532" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Reserved seat</text>
+<text x="1033" y="561" font-size="15" font-weight="400" fill="#586674" text-anchor="start">Today: never released.</text>
+<text x="1033" y="583" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Proposed: freed on cancel.</text>
+<rect x="1021" y="640" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="1158" y="629" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="1195.5" y="645" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="1033" y="664" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">STATE ELEMENT</text>
+<text x="1033" y="692" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Reservation</text>
+<text x="1033" y="721" font-size="15" font-weight="400" fill="#586674" text-anchor="start">Today: status held.</text>
+<text x="1033" y="743" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Proposed: 3 statuses, a key.</text>
+<rect x="1021" y="800" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="1158" y="789" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="1195.5" y="805" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="1033" y="824" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">STATE ELEMENT</text>
+<text x="1033" y="852" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Schema version</text>
+<text x="1033" y="881" font-size="15" font-weight="400" fill="#586674" text-anchor="start">Today: user_version 1.</text>
+<text x="1033" y="903" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Proposed: 2, rows kept.</text>
+<rect x="1270" y="160" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="1437" y="149" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="1459.5" y="165" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="1282" y="184" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">TEST</text>
+<text x="1282" y="212" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Key replay</text>
+<text x="1282" y="241" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">[integration] same key twice:</text>
+<text x="1282" y="263" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">one reservation, same ID.</text>
+<rect x="1270" y="320" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="1437" y="309" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="1459.5" y="325" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="1282" y="344" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">TEST</text>
+<text x="1282" y="372" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Lost reply</text>
+<text x="1282" y="401" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">[end-to-end] drop the reply,</text>
+<text x="1282" y="423" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">restart, recover the ID.</text>
+<rect x="1270" y="640" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="1437" y="629" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="1459.5" y="645" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="1282" y="664" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">TEST</text>
+<text x="1282" y="692" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Status transitions</text>
+<text x="1282" y="721" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">[component] repeat confirm</text>
+<text x="1282" y="743" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">and cancel; seats freed.</text>
+<rect x="1270" y="800" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="1437" y="789" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="1459.5" y="805" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="1282" y="824" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">TEST</text>
+<text x="1282" y="852" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Version 1 upgrade</text>
+<text x="1282" y="881" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">[component] a v1 file keeps</text>
+<text x="1282" y="903" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">its hold, which confirms.</text>
+<path d="M136 275 L136 320" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="146.0" y="303" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">protects</text>
+<path d="M136 435 L136 480" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="146.0" y="463" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">needs</text>
+<path d="M136 640 L136 595" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="146.0" y="623" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">needs</text>
+<path d="M136 800 L136 755" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="146.0" y="783" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">protects</text>
+<path d="M247 538 L304 538 L304 435" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="312" y="508" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">provided by</text>
+<path d="M385 275 L385 320" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="395.0" y="303" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">calls</text>
+<path d="M399 435 L399 640" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="407" y="568" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">stores in</text>
+<path d="M496 377 L634 377 L634 480" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="644.0" y="420" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">runs</text>
+<path d="M634 595 L634 640" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="644.0" y="623" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">delegates to</text>
+<path d="M634 755 L634 800" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="644.0" y="783" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">connects via</text>
+<path d="M745 537 L883 537 L883 435" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="893.0" y="490" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">implements</text>
+<path d="M883 275 L883 320" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="873.0" y="303" font-size="14" font-weight="600" fill="#344d64" text-anchor="end">sent with POST /holds</text>
+<path d="M745 698 L1021 698" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="883.0" y="670" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">records status</text>
+<text x="883.0" y="687" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">and key</text>
+<path d="M1132 640 L1132 595" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="1122.0" y="623" font-size="14" font-weight="600" fill="#344d64" text-anchor="end">cancel releases</text>
+<path d="M745 858 L1021 858" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="883.0" y="848" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">migrates 1 → 2</text>
+<path d="M994 218 L1270 218" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="1132.0" y="208" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">exercised by</text>
+<path d="M994 378 L1270 378" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="1132.0" y="368" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">exercised by</text>
+<path d="M1243 538 L1381 538 L1381 640" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="1373.0" y="578" font-size="14" font-weight="600" fill="#344d64" text-anchor="end">checked by</text>
+<path d="M1132 915 L1132 937 L1381 937 L1381 915" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="1256.5" y="931" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">checked by</text>
+</svg>
