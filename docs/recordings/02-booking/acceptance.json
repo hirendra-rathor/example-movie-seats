@@ -1,0 +1,88 @@
+{
+  "milestone": 2,
+  "result": "passed",
+  "observed_at": "2026-11-17T19:19:38.522501+00:00",
+  "observations": {
+    "upgraded_and_cancelled": {
+      "id": "3c9e856b-271c-491d-8567-b74ae8fc2869",
+      "status": "cancelled",
+      "seats": [
+        "A3",
+        "A4"
+      ]
+    },
+    "recovered": {
+      "id": "3bf42559-46e8-4338-9390-514b32c9bd73",
+      "status": "held",
+      "seats": [
+        "A3",
+        "A4"
+      ]
+    },
+    "confirmed": {
+      "id": "3bf42559-46e8-4338-9390-514b32c9bd73",
+      "status": "confirmed",
+      "seats": [
+        "A3",
+        "A4"
+      ]
+    },
+    "same_key_race_statuses": [
+      200,
+      201
+    ],
+    "screening": {
+      "id": "screening-1",
+      "seats": [
+        {
+          "id": "A1",
+          "status": "available"
+        },
+        {
+          "id": "A2",
+          "status": "available"
+        },
+        {
+          "id": "A3",
+          "status": "confirmed"
+        },
+        {
+          "id": "A4",
+          "status": "confirmed"
+        },
+        {
+          "id": "B1",
+          "status": "held"
+        },
+        {
+          "id": "B2",
+          "status": "available"
+        },
+        {
+          "id": "B3",
+          "status": "available"
+        },
+        {
+          "id": "B4",
+          "status": "available"
+        },
+        {
+          "id": "C1",
+          "status": "available"
+        },
+        {
+          "id": "C2",
+          "status": "available"
+        },
+        {
+          "id": "C3",
+          "status": "available"
+        },
+        {
+          "id": "C4",
+          "status": "available"
+        }
+      ]
+    }
+  }
+}

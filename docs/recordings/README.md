@@ -5,6 +5,7 @@ These recordings document the new build on `codex/release`, beginning at the app
 | Milestone | Recording | Implementation |
 | --- | --- | --- |
 | 1. Hold a complete selection | [Prompt, proposal, authorization and result](01-holds/README.md) | `edaddef6b4f46260ad0694930af343e4f2dafe11` |
+| 2. Confirm, cancel and recover replies | [Prompt, proposal, authorization and result](02-booking/README.md) | `9af1797ea2e4851319dd4ecc26d104b455d3a570` |
 
 ## What is recorded
 
