@@ -1,0 +1,19 @@
+{
+  "milestone": 3,
+  "baseline_commit": "9af1797ea2e4851319dd4ecc26d104b455d3a570",
+  "implementation_commit": "0e994e4e7c1220ea5568f68b32fe685abf4adb78",
+  "tests": {
+    "command": "uv run --locked python -m pytest -q",
+    "passed": 94
+  },
+  "acceptance": {
+    "commands": [
+      "uv run --locked python scripts/acceptance.py --milestone 3",
+      "uv run --locked python scripts/acceptance.py --milestone 2",
+      "uv run --locked python scripts/acceptance.py --milestone 1",
+      "uv run --locked python scripts/container_acceptance.py"
+    ],
+    "result": "passed"
+  },
+  "authorization": "standing user instruction; no separate approval"
+}

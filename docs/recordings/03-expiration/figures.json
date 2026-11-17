@@ -1,0 +1,744 @@
+{
+  "title": "Milestone 3 \u00b7 Enforce durable deadlines",
+  "baseline": "Baseline: fresh milestone 2 9af1797 (safe completion/retries; 66 tests)",
+  "columns": [
+    [
+      {
+        "id": "d1",
+        "title": "Know the hold deadline",
+        "facet": "Intentions / capability",
+        "status": "new",
+        "today": "Holds have no time limit.",
+        "detail": "Return a persisted expires_at value so the caller knows when the complete hold ends."
+      },
+      {
+        "id": "d2",
+        "title": "Release abandoned seats",
+        "facet": "Intentions / capability",
+        "status": "new",
+        "today": "Held seats remain unavailable forever.",
+        "detail": "Make all seats of an unconfirmed, due reservation available to another booking."
+      },
+      {
+        "id": "d3",
+        "title": "Downtime counts",
+        "facet": "Rules",
+        "status": "new",
+        "today": "Restart preserves an indefinite hold.",
+        "detail": "A stopped process does not pause the deadline; expire due holds before accepting work."
+      },
+      {
+        "id": "d4",
+        "title": "Deadline wins at equality",
+        "facet": "Rules",
+        "status": "new",
+        "today": "Confirmation checks only state.",
+        "detail": "At now >= deadline, confirmation must fail. Eligibility is decided after obtaining the write lock."
+      },
+      {
+        "id": "d5",
+        "title": "Completed bookings stay booked",
+        "facet": "Rules",
+        "status": "context",
+        "today": "",
+        "detail": "Confirmation is final and retains every seat. Expiration must never release confirmed claims."
+      },
+      {
+        "id": "d6",
+        "title": "Preserve earlier reservations",
+        "facet": "Rules / migration choice",
+        "status": "changed",
+        "today": "Existing holds have no recorded deadline.",
+        "detail": "Assign one grace deadline at upgrade; retain IDs, selections, keys and terminal states."
+      },
+      {
+        "id": "d7",
+        "title": "Replace containers safely",
+        "facet": "Intentions / capability",
+        "status": "new",
+        "today": "Only host processes are configured.",
+        "detail": "Keep the database on a named volume; replacing the service container retains reservations."
+      },
+      {
+        "id": "d8",
+        "title": "A retry does not extend time",
+        "facet": "Rules",
+        "status": "new",
+        "today": "Keys recover holds without a deadline.",
+        "detail": "Replay returns the original deadline and current state; it cannot renew or resurrect a hold."
+      }
+    ],
+    [
+      {
+        "id": "a1",
+        "title": "Host UTC clock",
+        "facet": "Architectural participants",
+        "status": "new",
+        "today": "No time dependency.",
+        "detail": "Provide absolute microseconds; the service samples it inside the acquired transaction."
+      },
+      {
+        "id": "a2",
+        "title": "Reservation service",
+        "facet": "Architectural participants",
+        "status": "changed",
+        "today": "Reads never change reservation state.",
+        "detail": "Expire due holds before every booking read or write, within the same transaction."
+      },
+      {
+        "id": "a3",
+        "title": "Service startup",
+        "facet": "Runtime responsibility",
+        "status": "changed",
+        "today": "Initializes schema only.",
+        "detail": "Migrate and expire before Uvicorn starts serving requests."
+      },
+      {
+        "id": "a4",
+        "title": "Competing HTTP workers",
+        "facet": "Runtime units",
+        "status": "changed",
+        "today": "Serialize only writes.",
+        "detail": "Serialize booking reads too, because cleanup can write; sample time after lock acquisition."
+      },
+      {
+        "id": "a5",
+        "title": "Movie Seats API",
+        "facet": "System context",
+        "status": "context",
+        "today": "",
+        "detail": "The same terminal clients use confirm, cancel, lookup and screening operations."
+      },
+      {
+        "id": "a6",
+        "title": "Upgrade operator",
+        "facet": "Participants",
+        "status": "changed",
+        "today": "Reopens the version-2 file.",
+        "detail": "Choose hold duration; first version-3 migration applies that duration once to existing held rows."
+      },
+      {
+        "id": "a7",
+        "title": "Docker container + volume",
+        "facet": "Runtime units / storage boundary",
+        "status": "new",
+        "today": "No container packaging.",
+        "detail": "Run one unprivileged service process; mount a retained local volume at /data."
+      },
+      {
+        "id": "a8",
+        "title": "Booking client",
+        "facet": "Architectural participants",
+        "status": "context",
+        "today": "",
+        "detail": "Retain the request key and retry equivalent creation; completed outcomes remain observable."
+      }
+    ],
+    [
+      {
+        "id": "s1",
+        "title": "clock.py",
+        "facet": "Components / time representation",
+        "status": "new",
+        "today": "No clock abstraction.",
+        "detail": "Inject UTC microseconds for deterministic checks; format exact UTC timestamps for callers."
+      },
+      {
+        "id": "s2",
+        "title": "db.py \u00b7 operation",
+        "facet": "Components / transaction policy",
+        "status": "new",
+        "today": "Each operation opens its own transaction.",
+        "detail": "Acquire write lock, sample now, expire due rows, then run request work inside a savepoint."
+      },
+      {
+        "id": "s3",
+        "title": "app.py",
+        "facet": "Components / configuration",
+        "status": "changed",
+        "today": "Only database path is configurable.",
+        "detail": "Configure hold duration using MOVIE_SEATS_HOLD_SECONDS (1\u201386400 seconds; default 300). Initialize before serving."
+      },
+      {
+        "id": "s4",
+        "title": "db.py \u00b7 complete",
+        "facet": "Components",
+        "status": "changed",
+        "today": "Any held reservation can confirm.",
+        "detail": "Clean up at transaction time before the lifecycle decision; an expired hold returns 409."
+      },
+      {
+        "id": "s5",
+        "title": "domain.py \u00b7 transition",
+        "facet": "Components",
+        "status": "changed",
+        "today": "Three reservation states.",
+        "detail": "Add terminal expired state; confirm and cancel of an expired hold reject without changing its reason."
+      },
+      {
+        "id": "s6",
+        "title": "db.py \u00b7 initialize",
+        "facet": "Components / migration",
+        "status": "changed",
+        "today": "Version 2 contains no deadlines.",
+        "detail": "Add deadline column + due index; fill held rows once; commit version 3 with their timestamps."
+      },
+      {
+        "id": "s7",
+        "title": "Dockerfile + compose.yaml",
+        "facet": "Components / deployment",
+        "status": "new",
+        "today": "No deployment definition.",
+        "detail": "Pin Python/uv versions, sync the lockfile, run as nonroot and preserve /data on a named volume."
+      },
+      {
+        "id": "s8",
+        "title": "db.py \u00b7 hold",
+        "facet": "Components",
+        "status": "changed",
+        "today": "Replay resolves key before availability.",
+        "detail": "Expire first; preserve key lookup ordering; assign a deadline only for a new successful hold."
+      }
+    ],
+    [
+      {
+        "id": "i1",
+        "title": "expires_at",
+        "facet": "Exchanges / reservation field",
+        "status": "new",
+        "today": "Reservation has id, status and seats.",
+        "detail": "Add an ISO 8601 UTC timestamp with microseconds; legacy terminal records may return null."
+      },
+      {
+        "id": "i2",
+        "title": "Screening and lookup",
+        "facet": "Interfaces",
+        "status": "changed",
+        "today": "Show persisted state without cleanup.",
+        "detail": "Return effective availability and expired status; no caller needs to trigger a separate cleanup job."
+      },
+      {
+        "id": "i3",
+        "title": "Startup readiness",
+        "facet": "Runtime interface",
+        "status": "changed",
+        "today": "Schema initialization precedes health.",
+        "detail": "Due holds are released before requests are accepted after a restart."
+      },
+      {
+        "id": "i4",
+        "title": "Confirmation at deadline",
+        "facet": "Interface guarantee",
+        "status": "changed",
+        "today": "Any held state accepts confirmation.",
+        "detail": "409 reservation_expired at equality or later, including a request that waited past its deadline."
+      },
+      {
+        "id": "i5",
+        "title": "Repeated confirmation",
+        "facet": "Interface guarantee",
+        "status": "context",
+        "today": "",
+        "detail": "Confirmed remains confirmed after its former hold deadline, and repeated confirmation succeeds."
+      },
+      {
+        "id": "i6",
+        "title": "Upgrade response",
+        "facet": "Exchanges / compatibility",
+        "status": "changed",
+        "today": "Old holds have no deadline field.",
+        "detail": "Existing held rows get one future deadline. Old confirmed/cancelled rows retain state and null deadline."
+      },
+      {
+        "id": "i7",
+        "title": "Compose run + retained volume",
+        "facet": "Operator interface",
+        "status": "new",
+        "today": "Host-only Uvicorn command.",
+        "detail": "docker compose up --build; replace container with the same volume and observe the same IDs."
+      },
+      {
+        "id": "i8",
+        "title": "Expired keyed replay",
+        "facet": "Interface guarantee",
+        "status": "new",
+        "today": "No expiry state.",
+        "detail": "200 with the same expired reservation and original deadline; a new key is needed for another hold."
+      }
+    ],
+    [
+      {
+        "id": "t1",
+        "title": "Absolute deadline",
+        "facet": "State elements",
+        "status": "new",
+        "today": "No deadline stored.",
+        "detail": "Integer Unix microseconds, computed once as transaction time + duration. No in-memory countdown."
+      },
+      {
+        "id": "t2",
+        "title": "Expired state and released claims",
+        "facet": "State elements",
+        "status": "new",
+        "today": "Only cancellation releases claims.",
+        "detail": "Change held -> expired and delete its claims atomically; keep original seats and request mappings."
+      },
+      {
+        "id": "t3",
+        "title": "Original deadline after restart",
+        "facet": "State elements",
+        "status": "new",
+        "today": "No time survives because none is stored.",
+        "detail": "Read the persisted timestamp. Restart, configuration change and replay never extend it."
+      },
+      {
+        "id": "t4",
+        "title": "Expiry survives rejection",
+        "facet": "State elements / recovery",
+        "status": "new",
+        "today": "Any domain error rolls back all work.",
+        "detail": "Commit due cleanup when an action rejects. Roll back only request changes to its savepoint."
+      },
+      {
+        "id": "t5",
+        "title": "Confirmed claims",
+        "facet": "State elements",
+        "status": "context",
+        "today": "",
+        "detail": "Only held rows are eligible for expiry; confirmed records and their claims are untouched."
+      },
+      {
+        "id": "t6",
+        "title": "Version-3 upgrade",
+        "facet": "State elements",
+        "status": "changed",
+        "today": "Version-1/2 rows lack deadline metadata.",
+        "detail": "Preserve all data; give old held rows migration_time + duration exactly once; terminal deadlines remain null."
+      },
+      {
+        "id": "t7",
+        "title": "Named data volume",
+        "facet": "State elements / durability",
+        "status": "new",
+        "today": "Database lives in the host checkout.",
+        "detail": "SQLite file is outside the replaceable image. Container deletion alone cannot erase the retained volume."
+      },
+      {
+        "id": "t8",
+        "title": "Original retry binding",
+        "facet": "State elements",
+        "status": "context",
+        "today": "",
+        "detail": "A key stays associated with its original reservation even after claims disappear."
+      }
+    ],
+    [
+      {
+        "id": "v1",
+        "title": "Exact time boundaries",
+        "facet": "Tests / deterministic unit + DB",
+        "status": "new",
+        "today": "No time tests.",
+        "detail": "At deadline\u22121 microsecond hold remains valid; at equality it expires; formatting round-trips exactly."
+      },
+      {
+        "id": "v2",
+        "title": "Expiry and reallocation",
+        "facet": "Tests / real SQLite",
+        "status": "new",
+        "today": "Only cancellation/reallocation tested.",
+        "detail": "Due A3+A4 become available together; a new hold succeeds; SQL failure cannot partially release claims."
+      },
+      {
+        "id": "v3",
+        "title": "Stopped-service acceptance",
+        "facet": "Tests / process HTTP",
+        "status": "new",
+        "today": "Restart only checks indefinite holds.",
+        "detail": "Stop before A3+A4 deadline, wait past it, restart: old expires, new hold succeeds, confirmed seats remain."
+      },
+      {
+        "id": "v4",
+        "title": "Waiting confirmation",
+        "facet": "Tests / concurrency + manual clock",
+        "status": "new",
+        "today": "No lock/time ordering check.",
+        "detail": "Block confirm behind a real write lock; advance to deadline before release; confirmation returns 409."
+      },
+      {
+        "id": "v5",
+        "title": "Confirmed preservation",
+        "facet": "Tests / regression + time",
+        "status": "changed",
+        "today": "Confirmed is permanent without a clock.",
+        "detail": "Advance past the original deadline; confirmed seats remain claimed and replay stays confirmed."
+      },
+      {
+        "id": "v6",
+        "title": "Upgrade and no renewal",
+        "facet": "Tests / frozen fresh fixtures",
+        "status": "new",
+        "today": "Version-1 to 2 upgrade only.",
+        "detail": "Upgrade fresh v1/v2 fixtures; IDs and keys survive. Reopen with another duration: deadlines stay fixed."
+      },
+      {
+        "id": "v7",
+        "title": "Container replacement",
+        "facet": "Tests / actual Docker Compose",
+        "status": "new",
+        "today": "No container test.",
+        "detail": "Remove container without its volume; replace after deadline; recover expired and confirmed reservations."
+      },
+      {
+        "id": "v8",
+        "title": "Replay and rejection effects",
+        "facet": "Tests / real DB + HTTP",
+        "status": "changed",
+        "today": "Replay preserves identity only.",
+        "detail": "Replay never renews time; failed confirmation still commits expiry; expired replay never reclaims seats."
+      }
+    ]
+  ],
+  "links": [
+    [
+      "d1",
+      "a1",
+      "served by",
+      "new"
+    ],
+    [
+      "a1",
+      "s1",
+      "uses",
+      "new"
+    ],
+    [
+      "s1",
+      "i1",
+      "formats",
+      "new"
+    ],
+    [
+      "i1",
+      "t1",
+      "describes",
+      "new"
+    ],
+    [
+      "t1",
+      "v1",
+      "checked by",
+      "new"
+    ],
+    [
+      "d2",
+      "a2",
+      "served by",
+      "new"
+    ],
+    [
+      "a2",
+      "s2",
+      "uses",
+      "new"
+    ],
+    [
+      "s2",
+      "i2",
+      "serves",
+      "new"
+    ],
+    [
+      "i2",
+      "t2",
+      "updates",
+      "new"
+    ],
+    [
+      "t2",
+      "v2",
+      "checked by",
+      "new"
+    ],
+    [
+      "d3",
+      "a3",
+      "enforced by",
+      "changed"
+    ],
+    [
+      "a3",
+      "s3",
+      "assembled by",
+      "changed"
+    ],
+    [
+      "s3",
+      "i3",
+      "provides",
+      "changed"
+    ],
+    [
+      "t3",
+      "v3",
+      "checked by",
+      "changed"
+    ],
+    [
+      "d4",
+      "a4",
+      "constrains",
+      "new"
+    ],
+    [
+      "s4",
+      "i4",
+      "enforces",
+      "new"
+    ],
+    [
+      "i4",
+      "t4",
+      "preserves",
+      "new"
+    ],
+    [
+      "t4",
+      "v4",
+      "checked by",
+      "new"
+    ],
+    [
+      "s5",
+      "i5",
+      "governs",
+      "context"
+    ],
+    [
+      "i5",
+      "t5",
+      "retains",
+      "context"
+    ],
+    [
+      "t5",
+      "v5",
+      "checked by",
+      "context"
+    ],
+    [
+      "d6",
+      "a6",
+      "requires",
+      "changed"
+    ],
+    [
+      "a6",
+      "s6",
+      "uses",
+      "changed"
+    ],
+    [
+      "s6",
+      "i6",
+      "reports",
+      "changed"
+    ],
+    [
+      "i6",
+      "t6",
+      "preserves",
+      "changed"
+    ],
+    [
+      "t6",
+      "v6",
+      "checked by",
+      "changed"
+    ],
+    [
+      "d7",
+      "a7",
+      "provided by",
+      "new"
+    ],
+    [
+      "a7",
+      "s7",
+      "defined by",
+      "new"
+    ],
+    [
+      "s7",
+      "i7",
+      "exposes",
+      "new"
+    ],
+    [
+      "i7",
+      "t7",
+      "retains",
+      "new"
+    ],
+    [
+      "t7",
+      "v7",
+      "checked by",
+      "new"
+    ],
+    [
+      "d8",
+      "a8",
+      "constrains",
+      "changed"
+    ],
+    [
+      "s8",
+      "i8",
+      "implements",
+      "changed"
+    ],
+    [
+      "i8",
+      "t8",
+      "recovers",
+      "changed"
+    ],
+    [
+      "t8",
+      "v8",
+      "checked by",
+      "changed"
+    ],
+    [
+      "d3",
+      "d2",
+      "protects release",
+      "new",
+      0
+    ],
+    [
+      "d4",
+      "d2",
+      "constrains timing",
+      "new",
+      1
+    ],
+    [
+      "d8",
+      "d1",
+      "preserves deadline",
+      "new",
+      2
+    ]
+  ],
+  "collaboration": {
+    "nodes": [
+      {
+        "id": "caller",
+        "title": "Booking client",
+        "facet": "External consumer",
+        "status": "context",
+        "today": "",
+        "detail": "Confirm the held reservation by ID, or read availability after downtime.",
+        "box": [
+          50,
+          170,
+          470,
+          245
+        ]
+      },
+      {
+        "id": "http",
+        "title": "Movie Seats API",
+        "facet": "Existing JSON boundary",
+        "status": "changed",
+        "today": "Returns lifecycle state only.",
+        "detail": "Expose expires_at and expired results while retaining status/error conventions.",
+        "box": [
+          700,
+          170,
+          470,
+          245
+        ]
+      },
+      {
+        "id": "clock",
+        "title": "Host UTC clock",
+        "facet": "clock.py \u00b7 injected in tests",
+        "status": "new",
+        "today": "No clock dependency.",
+        "detail": "Sample once after the write lock; now at deadline means the hold is due.",
+        "box": [
+          1350,
+          170,
+          470,
+          245
+        ]
+      },
+      {
+        "id": "store",
+        "title": "Reservation service",
+        "facet": "db.py \u00b7 operation + lifecycle",
+        "status": "changed",
+        "today": "Reads state, then applies terminal action.",
+        "detail": "Lock; expire due holds; savepoint; decide requested action. Preserve cleanup when domain work rejects.",
+        "box": [
+          700,
+          650,
+          470,
+          300
+        ]
+      },
+      {
+        "id": "sqlite",
+        "title": "SQLite engine / volume",
+        "facet": "Durable state outside the container",
+        "status": "changed",
+        "today": "Stores identities, claims and keys.",
+        "detail": "Also persist absolute deadlines. Commit expiry and claim release together; keep confirmed claims.",
+        "box": [
+          1350,
+          650,
+          470,
+          300
+        ]
+      }
+    ],
+    "links": [
+      [
+        "caller",
+        "http",
+        "HTTP",
+        "context"
+      ],
+      [
+        "http",
+        "store",
+        "booking operation",
+        "changed",
+        0
+      ],
+      [
+        "store",
+        "clock",
+        "2. read now",
+        "new"
+      ],
+      [
+        "store",
+        "sqlite",
+        "1. lock; 3. expire",
+        "changed"
+      ]
+    ],
+    "notes": [
+      "ORDER \u00b7 BEGIN IMMEDIATE -> sample UTC now -> release due held claims -> savepoint -> requested read/write -> commit.",
+      "AT DEADLINE \u00b7 A confirm arriving at 04.900000 but executing at 05.000000 for a 05.000000 deadline returns 409 expired.",
+      "REJECTED WORK \u00b7 Roll back only request work on a domain rejection, then commit expiry. SQL/infrastructure failures roll back the whole transaction.",
+      "UPGRADE \u00b7 Existing held rows receive migration time + configured duration once. Reopening the same file never renews them.",
+      "REPLACEMENT \u00b7 The container mounts /data from a named volume. Startup cleans due holds before serving; confirmed bookings keep their claims."
+    ]
+  },
+  "summary": "Expiration follows persisted UTC time, not process uptime. The observed deadline is authoritative; volume retention preserves it across container replacement."
+}

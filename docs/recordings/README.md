@@ -6,6 +6,7 @@ These recordings document the new build on `codex/release`, beginning at the app
 | --- | --- | --- |
 | 1. Hold a complete selection | [Prompt, proposal, authorization and result](01-holds/README.md) | `edaddef6b4f46260ad0694930af343e4f2dafe11` |
 | 2. Confirm, cancel and recover replies | [Prompt, proposal, authorization and result](02-booking/README.md) | `9af1797ea2e4851319dd4ecc26d104b455d3a570` |
+| 3. Release abandoned holds | [Prompt, proposal, authorization and result](03-expiration/README.md) | `0e994e4e7c1220ea5568f68b32fe685abf4adb78` |
 
 ## What is recorded
 

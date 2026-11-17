@@ -1,0 +1,87 @@
+{
+  "milestone": 3,
+  "result": "passed",
+  "observed_at": "2026-11-17T19:26:58.412319+00:00",
+  "observations": {
+    "expired": {
+      "id": "9fdc979e-a479-4656-a1ec-f91f4555cc76",
+      "status": "expired",
+      "seats": [
+        "A3",
+        "A4"
+      ],
+      "expires_at": "2026-11-17T19:26:57.884651Z"
+    },
+    "confirmed": {
+      "id": "25b391ab-9e83-4969-a601-660826c95d7d",
+      "status": "confirmed",
+      "seats": [
+        "B1",
+        "B2"
+      ],
+      "expires_at": "2026-11-17T19:26:57.886366Z"
+    },
+    "replacement": {
+      "id": "ffa9cf3a-66a7-4880-a710-35630097f9c8",
+      "status": "held",
+      "seats": [
+        "A3",
+        "A4"
+      ],
+      "expires_at": "2026-11-17T19:31:58.224299Z"
+    },
+    "screening": {
+      "id": "screening-1",
+      "seats": [
+        {
+          "id": "A1",
+          "status": "available"
+        },
+        {
+          "id": "A2",
+          "status": "available"
+        },
+        {
+          "id": "A3",
+          "status": "held"
+        },
+        {
+          "id": "A4",
+          "status": "held"
+        },
+        {
+          "id": "B1",
+          "status": "confirmed"
+        },
+        {
+          "id": "B2",
+          "status": "confirmed"
+        },
+        {
+          "id": "B3",
+          "status": "available"
+        },
+        {
+          "id": "B4",
+          "status": "available"
+        },
+        {
+          "id": "C1",
+          "status": "available"
+        },
+        {
+          "id": "C2",
+          "status": "available"
+        },
+        {
+          "id": "C3",
+          "status": "available"
+        },
+        {
+          "id": "C4",
+          "status": "available"
+        }
+      ]
+    }
+  }
+}
