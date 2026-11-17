@@ -2,7 +2,7 @@
 
 import json
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
@@ -21,6 +21,7 @@ class APIResponse(JSONResponse):
 class HoldRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     seats: list[StrictStr] = Field(min_length=1, max_length=12)
+    request_key: StrictStr | None = None
 
 
 def register_api(app: FastAPI, store: Store) -> None:
@@ -38,9 +39,19 @@ def register_api(app: FastAPI, store: Store) -> None:
         return store.screening()
 
     @app.post("/reservations", status_code=201)
-    def hold(body: HoldRequest):
-        return store.hold(body.seats)
+    def hold(body: HoldRequest, response: Response):
+        result = store.hold(body.seats, body.request_key)
+        response.status_code = 201 if result.created else 200
+        return result.reservation
 
     @app.get("/reservations/{reservation_id}")
     def reservation(reservation_id: str):
         return store.get(reservation_id)
+
+    @app.post("/reservations/{reservation_id}/confirm")
+    def confirm(reservation_id: str):
+        return store.complete(reservation_id, "confirmed")
+
+    @app.post("/reservations/{reservation_id}/cancel")
+    def cancel(reservation_id: str):
+        return store.complete(reservation_id, "cancelled")

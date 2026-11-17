@@ -7,11 +7,13 @@ Data is temporary by default; --work-dir retains a new scenario database.
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+from contextlib import closing
 from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
 import socket
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -88,9 +90,47 @@ def holds(database):
                 "screening": request(first, "GET", "/screening")[1]}
 
 
+def booking(database):
+    with closing(sqlite3.connect(database)) as connection:
+        connection.executescript((ROOT / "tests/fixtures/release_v1.sql").read_text())
+        legacy_id = connection.execute("SELECT id FROM reservations").fetchone()[0]
+    body = {"seats": ["A3", "A4"], "request_key": "party-17"}
+    with server(database) as base:
+        status, legacy = request(base, "GET", f"/reservations/{legacy_id}")
+        assert status == 200 and legacy["status"] == "held" and legacy["seats"] == ["A3", "A4"]
+        status, cancelled = request(base, "POST", f"/reservations/{legacy_id}/cancel")
+        assert status == 200 and cancelled["status"] == "cancelled"
+        status, oracle = request(base, "POST", "/reservations", body)
+        assert status == 201
+        # Keep the reply only as a test oracle. The next request uses the saved key, not its ID.
+    with server(database) as base, server(database) as other:
+        status, recovered = request(base, "POST", "/reservations", {**body, "seats": ["A4", "A3"]})
+        assert status == 200 and recovered == oracle
+        assert request(base, "POST", "/reservations", {**body, "seats": ["A1"]})[0] == 409
+        path = f'/reservations/{recovered["id"]}'
+        status, confirmed = request(base, "POST", path + "/confirm")
+        assert status == 200 and confirmed["status"] == "confirmed"
+        assert request(other, "POST", path + "/confirm") == (200, confirmed)
+        assert request(other, "POST", path + "/cancel")[0] == 409
+        assert request(other, "POST", f"/reservations/{legacy_id}/cancel") == (200, cancelled)
+        assert request(other, "POST", "/reservations", body) == (200, confirmed)
+        barrier = Barrier(2)
+        def keyed(base):
+            barrier.wait(timeout=5)
+            return request(base, "POST", "/reservations", {"seats": ["B1"], "request_key": "concurrent-key"})
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            outcomes = list(pool.map(keyed, [base, other]))
+        assert sorted(item[0] for item in outcomes) == [200, 201]
+        assert len({item[1]["id"] for item in outcomes}) == 1
+        state = request(base, "GET", "/screening")[1]
+        assert all(s["status"] == "confirmed" for s in state["seats"] if s["id"] in {"A3", "A4"})
+        return {"upgraded_and_cancelled": cancelled, "recovered": recovered, "confirmed": confirmed,
+                "same_key_race_statuses": sorted(item[0] for item in outcomes), "screening": state}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--milestone", type=int, choices=[1], required=True)
+    parser.add_argument("--milestone", type=int, choices=[1, 2], required=True)
     parser.add_argument("--work-dir", type=Path)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
@@ -100,7 +140,7 @@ def main():
         database = directory / "seats.sqlite3"
         if database.exists():
             raise SystemExit("Refusing to overwrite an existing scenario database; choose a new --work-dir.")
-        observations = holds(database)
+        observations = {1: holds, 2: booking}[args.milestone](database)
         report = {"milestone": args.milestone, "result": "passed",
                   "observed_at": datetime.now(timezone.utc).isoformat(), "observations": observations}
         rendered = json.dumps(report, indent=2) + "\n"

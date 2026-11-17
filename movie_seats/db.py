@@ -5,9 +5,9 @@ from pathlib import Path
 import sqlite3
 from uuid import uuid4
 
-from .domain import Problem, SEATS, selection
+from .domain import Creation, Problem, SEATS, request_identity, selection, transition
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 SCHEMA = (
     "CREATE TABLE seats (id TEXT PRIMARY KEY)",
     "CREATE TABLE reservations (id TEXT PRIMARY KEY, status TEXT NOT NULL)",
@@ -52,7 +52,7 @@ class Store:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.transaction(write=True) as connection:
             version = connection.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (0, SCHEMA_VERSION):
+            if version not in range(SCHEMA_VERSION + 1):
                 raise RuntimeError(f"Unsupported database schema version: {version}")
             if version == 0:
                 if connection.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchone():
@@ -60,12 +60,17 @@ class Store:
                 for statement in SCHEMA:
                     connection.execute(statement)
                 connection.executemany("INSERT INTO seats VALUES (?)", [(seat,) for seat in SEATS])
-                connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+                version = 1
+            if version == 1:
+                connection.execute("""CREATE TABLE requests (
+                    request_key TEXT PRIMARY KEY,
+                    reservation_id TEXT NOT NULL UNIQUE REFERENCES reservations(id))""")
             tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-            if not {"seats", "reservations", "reservation_seats", "claims"} <= tables:
+            if not {"seats", "reservations", "reservation_seats", "claims", "requests"} <= tables:
                 raise RuntimeError("Database schema is incomplete.")
             if tuple(row[0] for row in connection.execute("SELECT id FROM seats ORDER BY id")) != SEATS:
                 raise RuntimeError("Database screening inventory does not match this service.")
+            connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
 
     def _reservation(self, connection, reservation_id: str) -> dict:
         row = connection.execute("SELECT id, status FROM reservations WHERE id=?", (reservation_id,)).fetchone()
@@ -87,9 +92,17 @@ class Store:
                 LEFT JOIN reservations ON reservations.id=claims.reservation_id ORDER BY seats.id""")
             return {"id": "screening-1", "seats": [dict(row) for row in rows]}
 
-    def hold(self, seats: list[str] | tuple[str, ...]) -> dict:
+    def hold(self, seats: list[str] | tuple[str, ...], request_key: str | None = None) -> Creation:
         chosen = selection(seats)
+        key = request_identity(request_key)
         with self.transaction(write=True) as connection:
+            if key is not None:
+                existing = connection.execute("SELECT reservation_id FROM requests WHERE request_key=?", (key,)).fetchone()
+                if existing is not None:
+                    reservation = self._reservation(connection, existing[0])
+                    if tuple(reservation["seats"]) != chosen:
+                        raise Problem(409, "request_key_conflict", "That request key belongs to a different seat selection.")
+                    return Creation(reservation, created=False)
             placeholders = ",".join("?" for _ in chosen)
             occupied = connection.execute(f"SELECT seat FROM claims WHERE seat IN ({placeholders})", chosen).fetchall()
             if occupied:
@@ -98,4 +111,16 @@ class Store:
             connection.execute("INSERT INTO reservations VALUES (?, 'held')", (reservation_id,))
             connection.executemany("INSERT INTO reservation_seats VALUES (?, ?)", [(reservation_id, s) for s in chosen])
             connection.executemany("INSERT INTO claims VALUES (?, ?)", [(s, reservation_id) for s in chosen])
+            if key is not None:
+                connection.execute("INSERT INTO requests VALUES (?, ?)", (key, reservation_id))
+            return Creation(self._reservation(connection, reservation_id), created=True)
+
+    def complete(self, reservation_id: str, target: str) -> dict:
+        with self.transaction(write=True) as connection:
+            reservation = self._reservation(connection, reservation_id)
+            state = transition(reservation["status"], target)
+            if state != reservation["status"]:
+                connection.execute("UPDATE reservations SET status=? WHERE id=?", (state, reservation_id))
+                if state == "cancelled":
+                    connection.execute("DELETE FROM claims WHERE reservation_id=?", (reservation_id,))
             return self._reservation(connection, reservation_id)

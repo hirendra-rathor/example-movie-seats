@@ -12,7 +12,7 @@ from movie_seats.domain import Problem, SEATS
 
 
 def test_hold_is_durable_and_initialization_is_repeatable(store):
-    held = store.hold(["A4", "A3"])
+    held = store.hold(["A4", "A3"]).reservation
     other = Store(store.path)
     other.initialize()
     assert other.get(held["id"]) == held
@@ -25,11 +25,11 @@ def test_hold_is_durable_and_initialization_is_repeatable(store):
 
 
 def test_overlap_leaves_the_other_seat_free(store):
-    original = store.hold(["A3", "A4"])
+    original = store.hold(["A3", "A4"]).reservation
     with pytest.raises(Problem, match="complete selection"):
         store.hold(["A2", "A3"])
     assert store.get(original["id"]) == original
-    assert store.hold(["A2"])["seats"] == ["A2"]
+    assert store.hold(["A2"]).reservation["seats"] == ["A2"]
     with store.transaction() as connection:
         assert connection.execute("SELECT count(*) FROM reservations").fetchone()[0] == 2
 
@@ -41,7 +41,7 @@ def test_sql_failure_rolls_back_every_write(store):
     with pytest.raises(sqlite3.IntegrityError, match="injected write failure"):
         store.hold(["B3", "B4"])
     with store.transaction() as connection:
-        for table in ("reservations", "reservation_seats", "claims"):
+        for table in ("reservations", "reservation_seats", "claims", "requests"):
             assert connection.execute(f"SELECT count(*) FROM {table}").fetchone()[0] == 0
 
 
@@ -51,7 +51,7 @@ def test_independent_writers_have_one_winner(store):
         other = Store(store.path)
         barrier.wait(timeout=5)
         try:
-            return other.hold(["B1"])
+            return other.hold(["B1"]).reservation
         except Problem as error:
             return error.status
     with ThreadPoolExecutor(max_workers=2) as pool:
@@ -66,7 +66,7 @@ def test_lock_timeout_is_a_busy_error(store):
         with pytest.raises(Problem) as caught:
             impatient.hold(["C1"])
     assert caught.value.status == 503
-    assert impatient.hold(["C1"])["status"] == "held"
+    assert impatient.hold(["C1"]).reservation["status"] == "held"
 
 
 def test_unknown_identifier_has_no_effect(store):

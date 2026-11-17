@@ -38,3 +38,41 @@ def test_busy_response_is_retryable(client):
     assert response.status_code == 503
     assert response.headers["Retry-After"] == "1"
     assert response.json()["error"]["code"] == "database_busy"
+
+
+def test_keyed_creation_replay_and_actions(client):
+    body = {"seats": ["A3", "A4"], "request_key": "party"}
+    first = client.post("/reservations", json=body)
+    assert first.status_code == 201
+    id = first.json()["id"]
+    replay = client.post("/reservations", json={**body, "seats": ["A4", "A3"]})
+    assert replay.status_code == 200 and replay.json() == first.json()
+    mismatch = client.post("/reservations", json={**body, "seats": ["A1"]})
+    assert mismatch.status_code == 409
+    assert mismatch.json()["error"]["code"] == "request_key_conflict"
+    confirmed = client.post(f"/reservations/{id}/confirm")
+    assert confirmed.status_code == 200 and confirmed.json()["status"] == "confirmed"
+    assert client.post(f"/reservations/{id}/confirm").json() == confirmed.json()
+    assert client.post("/reservations", json=body).json() == confirmed.json()
+    assert client.post(f"/reservations/{id}/cancel").status_code == 409
+
+
+def test_cancellation_is_repeatable_and_id_remains_retrievable(client):
+    held = client.post("/reservations", json={"seats": ["B1"]}).json()
+    path = f'/reservations/{held["id"]}'
+    cancelled = client.post(path + "/cancel")
+    assert cancelled.status_code == 200 and cancelled.json()["status"] == "cancelled"
+    assert client.post(path + "/cancel").json() == cancelled.json()
+    assert client.get(path).json() == cancelled.json()
+    assert client.post(path + "/confirm").status_code == 409
+    assert client.post("/reservations", json={"seats": ["B1"]}).status_code == 201
+
+
+@pytest.mark.parametrize("key", ["", "contains space", "x" * 129, 123, False])
+def test_invalid_request_key_is_422(client, key):
+    assert client.post("/reservations", json={"seats": ["A1"], "request_key": key}).status_code == 422
+
+
+@pytest.mark.parametrize("action", ["confirm", "cancel"])
+def test_unknown_completion_is_404(client, action):
+    assert client.post(f"/reservations/missing/{action}").status_code == 404
