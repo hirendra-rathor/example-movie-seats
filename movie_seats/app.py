@@ -6,19 +6,25 @@ from contextlib import asynccontextmanager
 from html import escape
 from pathlib import Path
 
-from fastapi import FastAPI, Request, Response
+from typing import Annotated
+
+from fastapi import FastAPI, Header, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 
 from movie_seats.database import LOCK_TIMEOUT_SECONDS, database_path_from_environment, prepare_database
 from movie_seats.reservations import (
     AVAILABLE,
+    HoldKeyNotFound,
+    HoldKeyReused,
+    InvalidHoldKey,
     InvalidSelection,
     Reservation,
     ReservationBook,
     ReservationBookBusy,
     ReservationNotFound,
     SeatsUnavailable,
+    TransitionRefused,
 )
 from movie_seats.screening import SCREENING
 
@@ -29,7 +35,7 @@ class HoldRequest(BaseModel):
 
 class SeatStatus(BaseModel):
     seat: str
-    status: str = Field(description="`available` or `held`.")
+    status: str = Field(description="`available`, `held` or `booked`.")
 
 
 class SeatMap(BaseModel):
@@ -40,7 +46,7 @@ class SeatMap(BaseModel):
 class ReservationBody(BaseModel):
     reservation_id: str
     screening_id: str
-    status: str
+    status: str = Field(description="`held`, `confirmed` or `cancelled`.")
     seats: list[str]
     created_at: str
 
@@ -55,6 +61,10 @@ class UnavailableProblem(Problem):
 
 class InvalidSelectionProblem(Problem):
     invalid_seats: list[str]
+
+
+class StatusProblem(Problem):
+    status: str
 
 
 def _reservation_body(reservation: Reservation) -> ReservationBody:
@@ -94,15 +104,38 @@ def create_app(
             content={"detail": "Some requested seats are not available.", "unavailable_seats": list(error.seats)},
         )
 
+    @app.exception_handler(InvalidHoldKey)
+    def invalid_hold_key(_: Request, error: InvalidHoldKey) -> JSONResponse:
+        return JSONResponse(status_code=422, content={"detail": str(error)})
+
+    @app.exception_handler(HoldKeyReused)
+    def hold_key_reused(_: Request, __: HoldKeyReused) -> JSONResponse:
+        return JSONResponse(
+            status_code=422,
+            content={"detail": "This Idempotency-Key was already used for a different selection."},
+        )
+
     @app.exception_handler(ReservationNotFound)
     def reservation_not_found(_: Request, __: ReservationNotFound) -> JSONResponse:
         return JSONResponse(status_code=404, content={"detail": "Reservation not found."})
+
+    @app.exception_handler(HoldKeyNotFound)
+    def hold_key_not_found(_: Request, __: HoldKeyNotFound) -> JSONResponse:
+        return JSONResponse(status_code=404, content={"detail": "No hold was recorded under this key."})
+
+    @app.exception_handler(TransitionRefused)
+    def transition_refused(_: Request, error: TransitionRefused) -> JSONResponse:
+        action = "confirmed" if error.target == "confirmed" else "cancelled"
+        return JSONResponse(
+            status_code=409,
+            content={"detail": f"This reservation is {error.status}; it can't be {action}.", "status": error.status},
+        )
 
     @app.exception_handler(ReservationBookBusy)
     def reservation_book_busy(_: Request, __: ReservationBookBusy) -> JSONResponse:
         return JSONResponse(
             status_code=503,
-            content={"detail": "The reservation book is busy. Nothing was held; retry the request."},
+            content={"detail": "The reservation book is busy. Nothing changed; retry the request."},
             headers={"Retry-After": "1"},
         )
 
@@ -127,16 +160,41 @@ def create_app(
         status_code=201,
         response_model=ReservationBody,
         responses={
+            200: {"model": ReservationBody, "description": "This key already made a hold; it is returned unchanged."},
             409: {"model": UnavailableProblem, "description": "Some seats are taken; nothing was held."},
-            422: {"model": InvalidSelectionProblem, "description": "The selection is empty, repeated or unknown."},
+            422: {
+                "model": InvalidSelectionProblem,
+                "description": "The selection is empty, repeated or unknown, or the key is invalid or reused.",
+            },
             503: {"model": Problem, "description": "The write lock was busy; nothing was held."},
         },
     )
-    def place_hold(request: HoldRequest, response: Response) -> ReservationBody:
-        """Hold every requested seat together, or none of them."""
-        reservation = book.place_hold(request.seats)
-        response.headers["Location"] = f"/reservations/{reservation.reservation_id}"
-        return _reservation_body(reservation)
+    def place_hold(
+        request: HoldRequest,
+        response: Response,
+        idempotency_key: Annotated[
+            str | None,
+            Header(
+                alias="Idempotency-Key",
+                description="A client-generated key, such as a UUID, repeated on every retry of this hold.",
+            ),
+        ] = None,
+    ) -> ReservationBody:
+        """Hold every requested seat together, or none of them. A retried key returns its first hold."""
+        result = book.place_hold(request.seats, request_key=idempotency_key)
+        if result.replayed:
+            response.status_code = 200
+        response.headers["Location"] = f"/reservations/{result.reservation.reservation_id}"
+        return _reservation_body(result.reservation)
+
+    @app.get(
+        "/holds/{key}",
+        response_model=ReservationBody,
+        responses={404: {"model": Problem, "description": "No hold was recorded under this key."}},
+    )
+    def find_hold(key: str) -> ReservationBody:
+        """Find the reservation that a hold with this Idempotency-Key created."""
+        return _reservation_body(book.find_by_key(key))
 
     @app.get(
         "/reservations/{reservation_id}",
@@ -146,6 +204,22 @@ def create_app(
     def get_reservation(reservation_id: str) -> ReservationBody:
         """Look up a reservation by the ID returned when it was held."""
         return _reservation_body(book.get_reservation(reservation_id))
+
+    settle_responses = {
+        404: {"model": Problem, "description": "No reservation has this ID."},
+        409: {"model": StatusProblem, "description": "The reservation's status does not allow this change."},
+        503: {"model": Problem, "description": "The write lock was busy; nothing changed."},
+    }
+
+    @app.post("/reservations/{reservation_id}/confirm", response_model=ReservationBody, responses=settle_responses)
+    def confirm(reservation_id: str) -> ReservationBody:
+        """Confirm a held reservation as a booking. Repeating the request changes nothing."""
+        return _reservation_body(book.confirm(reservation_id))
+
+    @app.post("/reservations/{reservation_id}/cancel", response_model=ReservationBody, responses=settle_responses)
+    def cancel(reservation_id: str) -> ReservationBody:
+        """Cancel a held reservation and release its seats. Repeating the request changes nothing."""
+        return _reservation_body(book.cancel(reservation_id))
 
     return app
 
@@ -180,7 +254,8 @@ def _seat_map_page(book: ReservationBook) -> str:
             background: #fffcf5; text-align: center; }}
         .seat strong {{ display: block; font-size: 1.15rem; }}
         .seat span {{ font-size: 0.75rem; }}
-        .seat.held {{ background: #1c3347; border-color: #1c3347; color: #ffe0aa; }}
+        .seat.held {{ background: #ffe0aa; border-color: #d7ad74; }}
+        .seat.booked {{ background: #1c3347; border-color: #1c3347; color: #ffe0aa; }}
         code {{ background: #fffcf5; padding: 0.1rem 0.3rem; border-radius: 0.25rem; }}
     </style>
 </head>
@@ -190,8 +265,9 @@ def _seat_map_page(book: ReservationBook) -> str:
         <p>Screening <code>{escape(book.screening.screening_id)}</code>: {available} of {len(statuses)} seats available.</p>
         <div class="screen">SCREEN</div>
 {rows}
-        <p>Hold seats with the JSON API: <code>GET /seats</code>, <code>POST /holds</code> and
-        <code>GET /reservations/{{reservation_id}}</code>.</p>
+        <p>Hold seats with <code>POST /holds</code>, then confirm or cancel the hold with
+        <code>POST /reservations/{{reservation_id}}/confirm</code> or <code>/cancel</code>.
+        A client that loses a reply can find its hold again with <code>GET /holds/{{key}}</code>.</p>
         <p><a href="/docs">API documentation</a></p>
     </main>
 </body>

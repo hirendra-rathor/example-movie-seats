@@ -1,7 +1,8 @@
 """Integration checks for the Movie Seats JSON API and seat map in movie_seats.app.
 
-Exercise the real ASGI application and SQLite file through FastAPI's test
-client, including a second application instance on the same database file.
+Exercise holds, hold keys, confirmation and cancellation through the real ASGI
+application and SQLite file with FastAPI's test client, including a second
+application instance on the same database file.
 """
 
 from fastapi.testclient import TestClient
@@ -122,3 +123,81 @@ def test_seat_map_page_marks_held_seats():
     assert "10 of 12 seats available" in page.text
     assert '<div class="seat held" data-seat="A3">' in page.text
     assert '<div class="seat available" data-seat="B1">' in page.text
+
+
+def test_confirm_and_cancel_report_the_new_status_and_repeat_safely():
+    with TestClient(create_app()) as client:
+        kept = client.post("/holds", json={"seats": ["A3", "A4"]}).json()["reservation_id"]
+        dropped = client.post("/holds", json={"seats": ["B1"]}).json()["reservation_id"]
+        confirmed = [client.post(f"/reservations/{kept}/confirm") for _ in range(2)]
+        cancelled = [client.post(f"/reservations/{dropped}/cancel") for _ in range(2)]
+        seats = statuses(client)
+
+    assert [r.status_code for r in confirmed + cancelled] == [200, 200, 200, 200]
+    assert confirmed[0].json() == confirmed[1].json()
+    assert confirmed[0].json()["status"] == "confirmed"
+    assert cancelled[1].json()["status"] == "cancelled"
+    assert cancelled[1].json()["seats"] == ["B1"]
+    assert seats["A3"] == seats["A4"] == "booked"
+    assert seats["B1"] == "available"
+
+
+def test_refused_and_unknown_settlements():
+    with TestClient(create_app()) as client:
+        booked = client.post("/holds", json={"seats": ["C1"]}).json()["reservation_id"]
+        client.post(f"/reservations/{booked}/confirm")
+        refused = client.post(f"/reservations/{booked}/cancel")
+        missing = client.post("/reservations/does-not-exist/confirm")
+
+    assert refused.status_code == 409
+    assert refused.json() == {"detail": "This reservation is confirmed; it can't be cancelled.", "status": "confirmed"}
+    assert missing.status_code == 404
+
+
+def test_hold_key_replays_the_first_hold_and_finds_it():
+    with TestClient(create_app()) as client:
+        first = client.post("/holds", json={"seats": ["A3", "A4"]}, headers={"Idempotency-Key": "key-1"})
+        retried = client.post("/holds", json={"seats": ["A4", "A3"]}, headers={"Idempotency-Key": "key-1"})
+        found = client.get("/holds/key-1")
+        unknown = client.get("/holds/key-2")
+
+    assert (first.status_code, retried.status_code, found.status_code) == (201, 200, 200)
+    assert retried.json() == found.json() == first.json()
+    assert retried.headers["location"] == first.headers["location"]
+    assert unknown.status_code == 404
+    assert unknown.json() == {"detail": "No hold was recorded under this key."}
+
+
+def test_hold_key_errors():
+    with TestClient(create_app()) as client:
+        client.post("/holds", json={"seats": ["A1"]}, headers={"Idempotency-Key": "key-1"})
+        reused = client.post("/holds", json={"seats": ["A2"]}, headers={"Idempotency-Key": "key-1"})
+        invalid = client.post("/holds", json={"seats": ["A2"]}, headers={"Idempotency-Key": "not valid"})
+        seats = statuses(client)
+
+    assert reused.status_code == 422
+    assert reused.json() == {"detail": "This Idempotency-Key was already used for a different selection."}
+    assert invalid.status_code == 422
+    assert seats["A2"] == "available"
+
+
+def test_hold_key_replays_after_a_new_application_on_the_same_file(database_path):
+    with TestClient(create_app(database_path)) as client:
+        first = client.post("/holds", json={"seats": ["B3"]}, headers={"Idempotency-Key": "key-1"}).json()
+
+    with TestClient(create_app(database_path)) as restarted:
+        found = restarted.get("/holds/key-1")
+        retried = restarted.post("/holds", json={"seats": ["B3"]}, headers={"Idempotency-Key": "key-1"})
+
+    assert found.json() == first
+    assert (retried.status_code, retried.json()) == (200, first)
+
+
+def test_seat_map_page_marks_booked_seats():
+    with TestClient(create_app()) as client:
+        reservation = client.post("/holds", json={"seats": ["C4"]}).json()["reservation_id"]
+        client.post(f"/reservations/{reservation}/confirm")
+        page = client.get("/")
+
+    assert '<div class="seat booked" data-seat="C4">' in page.text
+    assert "11 of 12 seats available" in page.text
