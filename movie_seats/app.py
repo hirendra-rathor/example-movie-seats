@@ -1,12 +1,30 @@
-"""Create the Movie Seats starter HTTP application."""
+"""Assemble the HTTP application and initialize its configured SQLite store."""
+
+from contextlib import asynccontextmanager
+import os
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
+from .api import APIResponse, register_api
+from .db import Store
 
-def create_app() -> FastAPI:
-    """Build the starter application with an entry page and health endpoint."""
-    app = FastAPI(title="Movie Seats", version="0.1.0")
+
+def create_app(database_path: str | Path | None = None) -> FastAPI:
+    """Retain the factory entry point; tests supply their own database path."""
+    store = Store(database_path if database_path is not None else os.environ.get(
+        "MOVIE_SEATS_DB", "instance/movie-seats.sqlite3"
+    ))
+
+    @asynccontextmanager
+    async def lifespan(_app):
+        store.initialize()
+        yield
+
+    app = FastAPI(title="Movie Seats", version="0.1.0", lifespan=lifespan, default_response_class=APIResponse)
+    app.state.store = store
+    register_api(app, store)
 
     @app.get("/", response_class=HTMLResponse)
     def index() -> str:
