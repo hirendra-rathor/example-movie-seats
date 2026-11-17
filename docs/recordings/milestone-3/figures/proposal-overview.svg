@@ -1,0 +1,211 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1510 985" width="1510" height="985" role="img" aria-labelledby="title desc" font-family="Arial, Helvetica, sans-serif">
+<title id="title">Release abandoned holds</title><desc id="desc">Milestone 3 overview. Each new hold gets a wall-clock deadline that the reply reports; when it passes, an unconfirmed hold expires and its seats become available, even if the deadline passed while the service was stopped. Confirmed bookings keep their seats. Upgrades keep earlier reservations, and the service runs in a container whose data volume outlives the container. The API, routes, reservation book, database setup, Reservation API, reserved seats and reservations change; the container, data volume, Dockerfile, runtime settings and checks are new. Gray means context, blue means changed and green means new.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#435970"/></marker><marker id="arrow-muted" viewBox="0 0 10 10" refX="8.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#7d8b99"/></marker></defs>
+<rect width="1510" height="985" fill="white"/>
+<text x="28" y="43" font-size="29" font-weight="700" fill="#182f46" text-anchor="start">Release abandoned holds</text>
+<text x="28" y="75" font-size="17" font-weight="400" fill="#182f46" text-anchor="start">Proposed milestone 3   •   Deadlines are wall-clock times, so downtime counts and the data volume keeps them.</text>
+<rect x="1446" y="20" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="1468.5" y="36" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<rect x="1363" y="20" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="1400.5" y="36" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<rect x="1285" y="20" width="70" height="23" rx="4" fill="#a3a3a3"/>
+<text x="1320.0" y="36" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">context</text>
+<rect x="16" y="108" width="241" height="857" rx="5" fill="#eff4f8"/>
+<text x="29" y="138" font-size="17" font-weight="700" fill="#182f46" text-anchor="start">Domain</text>
+<rect x="265" y="108" width="241" height="857" rx="5" fill="#f5f7fa"/>
+<text x="278" y="138" font-size="17" font-weight="700" fill="#182f46" text-anchor="start">Architecture</text>
+<rect x="514" y="108" width="241" height="857" rx="5" fill="#eff4f8"/>
+<text x="527" y="138" font-size="17" font-weight="700" fill="#182f46" text-anchor="start">Subsystem Design</text>
+<rect x="763" y="108" width="241" height="857" rx="5" fill="#f5f7fa"/>
+<text x="776" y="138" font-size="17" font-weight="700" fill="#182f46" text-anchor="start">Subsystem Interfaces</text>
+<rect x="1012" y="108" width="241" height="857" rx="5" fill="#eff4f8"/>
+<text x="1025" y="138" font-size="17" font-weight="700" fill="#182f46" text-anchor="start">State Management</text>
+<rect x="1261" y="108" width="241" height="857" rx="5" fill="#f5f7fa"/>
+<text x="1274" y="138" font-size="17" font-weight="700" fill="#182f46" text-anchor="start">Verification</text>
+<rect x="25" y="160" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="192" y="149" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="214.5" y="165" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="37" y="184" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">INTENTION</text>
+<text x="37" y="212" font-size="19" font-weight="700" fill="#182f46" text-anchor="start">Free abandoned seats</text>
+<text x="37" y="241" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Unconfirmed holds end, so</text>
+<text x="37" y="263" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">others can book the seats.</text>
+<rect x="25" y="320" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="192" y="309" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="214.5" y="325" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="37" y="344" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">CAPABILITY</text>
+<text x="37" y="372" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Timed holds</text>
+<text x="37" y="401" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Report each deadline;</text>
+<text x="37" y="423" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">release seats after it.</text>
+<rect x="25" y="480" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="192" y="469" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="214.5" y="485" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="37" y="504" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">RULE</text>
+<text x="37" y="532" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Downtime counts</text>
+<text x="37" y="561" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Deadlines are wall-clock;</text>
+<text x="37" y="583" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">bookings never expire.</text>
+<rect x="25" y="640" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="192" y="629" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="214.5" y="645" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="37" y="664" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">INTENTION</text>
+<text x="37" y="692" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Upgrade safely</text>
+<text x="37" y="721" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Keep earlier reservations</text>
+<text x="37" y="743" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">through upgrades.</text>
+<rect x="25" y="800" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="192" y="789" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="214.5" y="805" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="37" y="824" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">CAPABILITY</text>
+<text x="37" y="852" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Durable storage</text>
+<text x="37" y="881" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Data outlives versions</text>
+<text x="37" y="903" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">and containers.</text>
+<rect x="274" y="160" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#a3a3a3" stroke-width="2.6"/>
+<rect x="416" y="149" width="70" height="23" rx="4" fill="#a3a3a3"/>
+<text x="451.0" y="165" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">context</text>
+<text x="286" y="184" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">PARTICIPANT</text>
+<text x="286" y="212" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Booking client</text>
+<text x="286" y="241" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Reads expires_at from</text>
+<text x="286" y="263" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">the hold reply.</text>
+<rect x="274" y="480" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="411" y="469" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="448.5" y="485" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="286" y="504" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">PARTICIPANT</text>
+<text x="286" y="532" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Movie Seats API</text>
+<text x="286" y="561" font-size="15" font-weight="400" fill="#586674" text-anchor="start">Today: holds never end.</text>
+<text x="286" y="583" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Proposed: expires due holds.</text>
+<rect x="274" y="640" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="441" y="629" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="463.5" y="645" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="286" y="664" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">RUNTIME UNIT</text>
+<text x="286" y="692" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Container</text>
+<text x="286" y="721" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Runs uvicorn from the</text>
+<text x="286" y="743" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Movie Seats image.</text>
+<rect x="274" y="800" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="441" y="789" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="463.5" y="805" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="286" y="824" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">STORE</text>
+<text x="286" y="852" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Data volume</text>
+<text x="286" y="881" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Named volume at /data</text>
+<text x="286" y="903" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">keeps the SQLite file.</text>
+<rect x="523" y="160" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="660" y="149" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="697.5" y="165" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="535" y="184" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">COMPONENT</text>
+<text x="535" y="212" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Database setup</text>
+<text x="535" y="241" font-size="15" font-weight="400" fill="#586674" text-anchor="start">Today: migrates up to 2.</text>
+<text x="535" y="263" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Proposed: to 3, deadlines.</text>
+<rect x="523" y="320" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="690" y="309" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="712.5" y="325" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="535" y="344" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">COMPONENT</text>
+<text x="535" y="372" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Dockerfile</text>
+<text x="535" y="401" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Python 3.12 image with</text>
+<text x="535" y="423" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">the locked dependencies.</text>
+<rect x="523" y="640" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="660" y="629" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="697.5" y="645" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="535" y="664" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">COMPONENT</text>
+<text x="535" y="692" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">create_app routes</text>
+<text x="535" y="721" font-size="15" font-weight="400" fill="#586674" text-anchor="start">Today: no hold time.</text>
+<text x="535" y="743" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Proposed: + startup sweep.</text>
+<rect x="523" y="800" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="660" y="789" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="697.5" y="805" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="535" y="824" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">COMPONENT</text>
+<text x="535" y="852" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Reservation book</text>
+<text x="535" y="881" font-size="15" font-weight="400" fill="#586674" text-anchor="start">Today: holds never end.</text>
+<text x="535" y="903" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Proposed: deadlines, expiry.</text>
+<rect x="772" y="320" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="939" y="309" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="961.5" y="325" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="784" y="344" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">INTERFACE</text>
+<text x="784" y="372" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Runtime settings</text>
+<text x="784" y="401" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Hold-seconds variable,</text>
+<text x="784" y="423" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">port 8000, volume /data.</text>
+<rect x="772" y="480" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="909" y="469" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="946.5" y="485" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="784" y="504" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">INTERFACE</text>
+<text x="784" y="532" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Reservation API</text>
+<text x="784" y="561" font-size="15" font-weight="400" fill="#586674" text-anchor="start">Today: no deadline.</text>
+<text x="784" y="583" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Proposed: + expires_at.</text>
+<rect x="1021" y="640" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="1158" y="629" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="1195.5" y="645" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="1033" y="664" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">STATE ELEMENT</text>
+<text x="1033" y="692" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Reserved seat</text>
+<text x="1033" y="721" font-size="15" font-weight="400" fill="#586674" text-anchor="start">Today: released by cancel.</text>
+<text x="1033" y="743" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Proposed: also by expiry.</text>
+<rect x="1021" y="800" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#3b82f6" stroke-width="2.6"/>
+<rect x="1158" y="789" width="75" height="23" rx="4" fill="#3b82f6"/>
+<text x="1195.5" y="805" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">changed</text>
+<text x="1033" y="824" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">STATE ELEMENT</text>
+<text x="1033" y="852" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Reservation</text>
+<text x="1033" y="881" font-size="15" font-weight="400" fill="#586674" text-anchor="start">Today: no deadline.</text>
+<text x="1033" y="903" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">Proposed: deadline, expired.</text>
+<rect x="1270" y="160" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="1437" y="149" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="1459.5" y="165" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="1282" y="184" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">TEST</text>
+<text x="1282" y="212" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Version 2 upgrade</text>
+<text x="1282" y="241" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">[component] a v2 file keeps</text>
+<text x="1282" y="263" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">its rows; old holds timed.</text>
+<rect x="1270" y="320" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="1437" y="309" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="1459.5" y="325" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="1282" y="344" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">TEST</text>
+<text x="1282" y="372" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Restart and swap</text>
+<text x="1282" y="401" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">[end-to-end] downtime frees</text>
+<text x="1282" y="423" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">seats; a new container keeps.</text>
+<rect x="1270" y="480" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="1437" y="469" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="1459.5" y="485" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="1282" y="504" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">TEST</text>
+<text x="1282" y="532" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">HTTP expiry</text>
+<text x="1282" y="561" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">[integration] 201 has</text>
+<text x="1282" y="583" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">expires_at; late confirm 409.</text>
+<rect x="1270" y="800" width="222" height="115" rx="7" fill="#f9fbfd" stroke="#22a06b" stroke-width="2.6"/>
+<rect x="1437" y="789" width="45" height="23" rx="4" fill="#22a06b"/>
+<text x="1459.5" y="805" font-size="13" font-weight="700" fill="#0a1d28" text-anchor="middle">new</text>
+<text x="1282" y="824" font-size="12" font-weight="700" fill="#48617a" text-anchor="start">TEST</text>
+<text x="1282" y="852" font-size="20" font-weight="700" fill="#182f46" text-anchor="start">Expiry boundary</text>
+<text x="1282" y="881" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">[component] 599 s held,</text>
+<text x="1282" y="903" font-size="15" font-weight="400" fill="#192e42" text-anchor="start">600 s expired; booked stays.</text>
+<path d="M136 275 L136 320" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="146.0" y="303" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">needs</text>
+<path d="M136 480 L136 435" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="146.0" y="463" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">constrains</text>
+<path d="M136 755 L136 800" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="146.0" y="783" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">needs</text>
+<path d="M247 378 L304 378 L304 480" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="312" y="350" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">provided by</text>
+<path d="M396 275 L396 480" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="404" y="412" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">calls</text>
+<path d="M385 640 L385 595" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="395.0" y="623" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">runs</text>
+<path d="M385 755 L385 800" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="395.0" y="783" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">mounts /data</text>
+<path d="M136 915 L136 937 L385 937 L385 915" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="260.5" y="931" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">provided by</text>
+<path d="M496 537 L634 537 L634 640" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="644.0" y="580" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">handled by</text>
+<path d="M634 755 L634 800" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="644.0" y="783" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">delegates to</text>
+<path d="M745 697 L883 697 L883 595" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="893.0" y="650" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">implements</text>
+<path d="M883 435 L883 480" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="893.0" y="463" font-size="14" font-weight="600" fill="#344d64" text-anchor="start">sets the hold time</text>
+<path d="M745 858 L1021 858" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="883.0" y="830" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">expires due holds</text>
+<text x="883.0" y="847" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">under the write lock</text>
+<path d="M1132 800 L1132 755" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="1122.0" y="783" font-size="14" font-weight="600" fill="#344d64" text-anchor="end">expiry releases</text>
+<path d="M745 218 L1270 218" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="1132.0" y="208" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">checked by</text>
+<path d="M994 378 L1270 378" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="1132.0" y="368" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">exercised by</text>
+<path d="M994 538 L1270 538" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="1132.0" y="528" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">exercised by</text>
+<path d="M1243 698 L1381 698 L1381 800" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="1373.0" y="738" font-size="14" font-weight="600" fill="#344d64" text-anchor="end">checked by</text>
+<path d="M1132 915 L1132 937 L1421 937 L1421 915" fill="none" stroke="#435970" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="1276.5" y="931" font-size="14" font-weight="600" fill="#344d64" text-anchor="middle">checked by</text>
+</svg>

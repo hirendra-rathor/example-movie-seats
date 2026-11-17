@@ -1,6 +1,6 @@
 # Milestone 2: Confirm or cancel a hold and recover a lost reply
 
-[All chapters](../README.md) · Previous: [Milestone 1](../milestone-1/README.md)
+[All chapters](../README.md) · Previous: [Milestone 1](../milestone-1/README.md) · Next: [Milestone 3](../milestone-3/README.md)
 
 **Checkpoint.** Implementation commit
 [`bcc365b`](https://github.com/hirendra-rathor/example-movie-seats/commit/bcc365bda6609b11d87fe2aa7c5f0026bca28a76)
