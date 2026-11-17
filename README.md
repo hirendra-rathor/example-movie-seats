@@ -51,6 +51,34 @@ Open [Movie Seats](http://127.0.0.1:8000/) in your browser. Run the tests from t
 uv run --locked python -m pytest -q
 ```
 
+Reservations are stored in `instance/movie-seats.sqlite3`; set `MOVIE_SEATS_DATABASE` to use
+another file. Unconfirmed holds expire after 600 seconds; set `MOVIE_SEATS_HOLD_SECONDS` to change
+the hold time.
+
+## Run the example in a container
+
+Build the image and start a container with a named volume for the reservations. A replacement
+container started on the same volume keeps them.
+
+```sh
+docker build --tag movie-seats .
+docker volume create movie-seats-data
+docker run --detach --name movie-seats --publish 127.0.0.1:8000:8000 \
+  --volume movie-seats-data:/data movie-seats
+```
+
+To replace the container, remove it and run the same `docker run` command again.
+
+```sh
+docker rm --force movie-seats
+```
+
+The container check builds the image and replaces a container. It runs only when you ask for it.
+
+```sh
+MOVIE_SEATS_CONTAINER_TESTS=1 uv run --locked python -m pytest -q tests/test_container.py
+```
+
 ## License
 
 The application and tutorial materials are available under the [MIT License](LICENSE).

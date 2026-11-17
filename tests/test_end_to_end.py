@@ -2,7 +2,8 @@
 
 Start the real server process on a local port, send overlapping holds over
 HTTP at the same moment, recover a discarded reply by its hold key, restart
-the process and look the holds up again, and start on a milestone 1 file.
+the process and look the holds up again, start on a milestone 1 file, and
+let a hold's deadline pass while the server is stopped.
 """
 
 import json
@@ -40,9 +41,9 @@ def request(base_url, method, path, body=None, headers=None):
 
 
 @contextmanager
-def running_server(database_path):
+def running_server(database_path, **settings):
     port = free_port()
-    env = {**os.environ, "MOVIE_SEATS_DATABASE": str(database_path)}
+    env = {**os.environ, "MOVIE_SEATS_DATABASE": str(database_path), **settings}
     process = subprocess.Popen(
         [
             sys.executable, "-m", "uvicorn", "movie_seats.app:create_app", "--factory",
@@ -126,3 +127,22 @@ def test_server_upgrades_a_version_1_file_and_settles_its_hold(version_1_file):
 
     assert (found_status, found["status"], found["seats"]) == (200, "held", ["A3", "A4"])
     assert (confirm_status, confirmed["status"]) == (200, "confirmed")
+
+
+def test_deadline_that_passes_while_stopped_frees_the_seats_on_restart(database_path):
+    with running_server(database_path, MOVIE_SEATS_HOLD_SECONDS="2") as base_url:
+        _, hold = request(base_url, "POST", "/holds", {"seats": ["A3", "A4"]})
+        _, booking = request(base_url, "POST", "/holds", {"seats": ["B1"]})
+        request(base_url, "POST", f"/reservations/{booking['reservation_id']}/confirm")
+
+    time.sleep(3)  # The deadline passes while no server runs.
+
+    with running_server(database_path, MOVIE_SEATS_HOLD_SECONDS="2") as base_url:
+        _, seat_map = request(base_url, "GET", "/seats")
+        _, expired = request(base_url, "GET", f"/reservations/{hold['reservation_id']}")
+        confirm_status, refused = request(base_url, "POST", f"/reservations/{hold['reservation_id']}/confirm")
+
+    taken = {seat["seat"]: seat["status"] for seat in seat_map["seats"] if seat["status"] != "available"}
+    assert taken == {"B1": "booked"}
+    assert (expired["status"], expired["expires_at"]) == ("expired", hold["expires_at"])
+    assert (confirm_status, refused["status"]) == (409, "expired")

@@ -1,12 +1,14 @@
 """Component checks for the reservation book in movie_seats.reservations.
 
 Exercise availability, all-or-nothing holds, selection rules, lookups, hold
-keys, confirmation and cancellation, and the races between overlapping
-requests against a real SQLite file, without HTTP.
+keys, confirmation and cancellation, hold deadlines and expiry under a
+controlled clock, and the races between overlapping requests against a real
+SQLite file, without HTTP.
 """
 
 import threading
 import time
+from datetime import timedelta
 
 import pytest
 
@@ -16,6 +18,7 @@ from movie_seats.reservations import (
     BOOKED,
     CANCELLED,
     CONFIRMED,
+    EXPIRED,
     HELD,
     HoldKeyNotFound,
     HoldKeyReused,
@@ -317,3 +320,111 @@ def test_simultaneous_confirm_and_cancel_apply_one_change(book, database_path):
     refused = [outcome for outcome in outcomes if isinstance(outcome, TransitionRefused)]
     assert len(applied) == 1 and len(refused) == 1
     assert book.get_reservation(reservation.reservation_id).status == applied[0].status
+
+
+@pytest.fixture
+def timed_book(database_path, clock):
+    prepare_database(database_path)
+    book = ReservationBook(database_path, SCREENING, clock=clock, hold_duration=timedelta(seconds=600))
+    book.start()
+    return book
+
+
+def stored_status(database_path, reservation_id):
+    connection = connect(database_path)
+    try:
+        return connection.execute(
+            "SELECT status FROM reservations WHERE reservation_id = ?", (reservation_id,)
+        ).fetchone()[0]
+    finally:
+        connection.close()
+
+
+def test_hold_reports_its_deadline(timed_book):
+    reservation = timed_book.place_hold(["A3", "A4"]).reservation
+
+    assert reservation.created_at == "2026-11-17T12:00:00Z"
+    assert reservation.expires_at == "2026-11-17T12:10:00Z"
+    assert timed_book.get_reservation(reservation.reservation_id).expires_at == "2026-11-17T12:10:00Z"
+
+
+def test_hold_is_held_one_second_before_its_deadline_and_expired_at_it(timed_book, clock):
+    reservation = timed_book.place_hold(["A3", "A4"]).reservation
+
+    clock.advance(599)
+    before = (timed_book.get_reservation(reservation.reservation_id).status, held_seats(timed_book))
+    clock.advance(1)
+    at = (timed_book.get_reservation(reservation.reservation_id).status, held_seats(timed_book))
+
+    assert before == (HELD, ["A3", "A4"])
+    assert at == (EXPIRED, [])
+
+
+def test_confirming_before_the_deadline_keeps_the_seats_for_good(timed_book, clock):
+    reservation = timed_book.place_hold(["A3", "A4"]).reservation
+    clock.advance(599)
+
+    confirmed = timed_book.confirm(reservation.reservation_id)
+    clock.advance(86_400)
+
+    assert confirmed.status == CONFIRMED
+    assert confirmed.expires_at is None
+    assert timed_book.get_reservation(reservation.reservation_id).status == CONFIRMED
+    assert dict(timed_book.seat_statuses())["A4"] == BOOKED
+
+
+@pytest.mark.parametrize("action", ["confirm", "cancel"])
+def test_expired_hold_refuses_confirm_and_cancel(timed_book, clock, database_path, action):
+    reservation = timed_book.place_hold(["B1"]).reservation
+    clock.advance(600)
+
+    with pytest.raises(TransitionRefused) as refused:
+        getattr(timed_book, action)(reservation.reservation_id)
+
+    assert refused.value.status == EXPIRED
+    assert stored_status(database_path, reservation.reservation_id) == EXPIRED
+
+
+def test_seats_of_an_expired_hold_can_be_held_again(timed_book, clock):
+    first = timed_book.place_hold(["A3", "A4"]).reservation
+    clock.advance(600)
+
+    second = timed_book.place_hold(["A4", "B1"]).reservation
+
+    assert second.seats == ("A4", "B1")
+    assert timed_book.get_reservation(first.reservation_id).status == EXPIRED
+    assert held_seats(timed_book) == ["A4", "B1"]
+
+
+def test_retried_key_after_expiry_returns_the_expired_hold(timed_book, clock):
+    timed_book.place_hold(["C1"], request_key="key-1")
+    clock.advance(601)
+
+    retried = timed_book.place_hold(["C1"], request_key="key-1")
+
+    assert retried.replayed is True
+    assert retried.reservation.status == EXPIRED
+    assert held_seats(timed_book) == []
+
+
+def test_deadline_that_passed_while_stopped_is_expired_at_start(timed_book, clock, database_path):
+    reservation = timed_book.place_hold(["C3", "C4"]).reservation
+    booking = timed_book.place_hold(["B4"]).reservation
+    timed_book.confirm(booking.reservation_id)
+
+    clock.advance(15 * 60)  # The service is stopped past the deadline.
+    restarted = ReservationBook(database_path, SCREENING, clock=clock, hold_duration=timedelta(seconds=600))
+    report = restarted.start()
+
+    assert report.holds_expired == 1
+    assert stored_status(database_path, reservation.reservation_id) == EXPIRED
+    assert stored_status(database_path, booking.reservation_id) == CONFIRMED
+    assert dict(restarted.seat_statuses()) == {
+        **{seat: AVAILABLE for seat in SCREENING.seats},
+        "B4": BOOKED,
+    }
+
+
+def test_hold_duration_must_be_positive(database_path):
+    with pytest.raises(ValueError):
+        ReservationBook(database_path, SCREENING, hold_duration=timedelta(0))

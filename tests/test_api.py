@@ -1,13 +1,17 @@
 """Integration checks for the Movie Seats JSON API and seat map in movie_seats.app.
 
-Exercise holds, hold keys, confirmation and cancellation through the real ASGI
-application and SQLite file with FastAPI's test client, including a second
-application instance on the same database file.
+Exercise holds, hold keys, confirmation, cancellation, hold deadlines and the
+hold-time setting through the real ASGI application and SQLite file with
+FastAPI's test client, including a second application instance on the same
+database file.
 """
 
+from datetime import datetime, timedelta
+
+import pytest
 from fastapi.testclient import TestClient
 
-from movie_seats.app import create_app
+from movie_seats.app import HOLD_SECONDS_ENV, create_app
 from movie_seats.database import connect
 
 
@@ -201,3 +205,60 @@ def test_seat_map_page_marks_booked_seats():
 
     assert '<div class="seat booked" data-seat="C4">' in page.text
     assert "11 of 12 seats available" in page.text
+
+
+def parse(timestamp):
+    return datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%SZ")
+
+
+def test_hold_reply_reports_when_the_hold_expires():
+    with TestClient(create_app()) as client:
+        body = client.post("/holds", json={"seats": ["A1"]}).json()
+
+    assert parse(body["expires_at"]) - parse(body["created_at"]) == timedelta(seconds=600)
+
+
+def test_hold_time_comes_from_the_environment(monkeypatch):
+    monkeypatch.setenv(HOLD_SECONDS_ENV, "120")
+    with TestClient(create_app()) as client:
+        body = client.post("/holds", json={"seats": ["A1"]}).json()
+        page = client.get("/")
+
+    assert parse(body["expires_at"]) - parse(body["created_at"]) == timedelta(seconds=120)
+    assert "expire 120 seconds after they are made" in page.text
+
+
+@pytest.mark.parametrize("value", ["0", "-5", "ten", "1.5"])
+def test_invalid_hold_time_stops_startup(monkeypatch, value):
+    monkeypatch.setenv(HOLD_SECONDS_ENV, value)
+
+    with pytest.raises(ValueError, match=HOLD_SECONDS_ENV):
+        create_app()
+
+
+def test_expired_hold_frees_its_seats_and_refuses_confirmation(clock):
+    with TestClient(create_app(hold_seconds=60, clock=clock)) as client:
+        held = client.post("/holds", json={"seats": ["A3", "A4"]}, headers={"Idempotency-Key": "key-1"}).json()
+        clock.advance(60)
+        found = client.get(f"/reservations/{held['reservation_id']}").json()
+        seats = statuses(client)
+        confirm = client.post(f"/reservations/{held['reservation_id']}/confirm")
+        replay = client.post("/holds", json={"seats": ["A3", "A4"]}, headers={"Idempotency-Key": "key-1"})
+
+    assert held["expires_at"] == "2026-11-17T12:01:00Z"
+    assert (found["status"], found["expires_at"]) == ("expired", "2026-11-17T12:01:00Z")
+    assert seats["A3"] == seats["A4"] == "available"
+    assert confirm.status_code == 409
+    assert confirm.json() == {"detail": "This reservation is expired; it can't be confirmed.", "status": "expired"}
+    assert (replay.status_code, replay.json()["status"]) == (200, "expired")
+
+
+def test_confirmed_booking_reports_no_deadline_and_keeps_its_seats(clock):
+    with TestClient(create_app(hold_seconds=60, clock=clock)) as client:
+        held = client.post("/holds", json={"seats": ["C2"]}).json()
+        confirmed = client.post(f"/reservations/{held['reservation_id']}/confirm").json()
+        clock.advance(3600)
+        seats = statuses(client)
+
+    assert confirmed["expires_at"] is None
+    assert seats["C2"] == "booked"

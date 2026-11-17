@@ -1,4 +1,4 @@
-"""The reservation book: availability, all-or-nothing holds, hold keys and settlement."""
+"""The reservation book: availability, timed all-or-nothing holds, hold keys and settlement."""
 
 import re
 import sqlite3
@@ -7,7 +7,7 @@ from collections import Counter
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from movie_seats.database import LOCK_TIMEOUT_SECONDS, connect
@@ -20,7 +20,9 @@ BOOKED = "booked"
 HELD = "held"
 CONFIRMED = "confirmed"
 CANCELLED = "cancelled"
+EXPIRED = "expired"
 
+DEFAULT_HOLD_DURATION = timedelta(seconds=600)
 _HOLD_KEY = re.compile(r"[A-Za-z0-9._~-]{1,128}")
 
 
@@ -31,12 +33,20 @@ class Reservation:
     status: str
     seats: tuple[str, ...]
     created_at: str
+    expires_at: str | None
+    """The deadline of a held or expired reservation; None once it is confirmed or cancelled."""
 
 
 @dataclass(frozen=True)
 class HoldResult:
     reservation: Reservation
     replayed: bool
+
+
+@dataclass(frozen=True)
+class StartReport:
+    deadlines_assigned: int
+    holds_expired: int
 
 
 class InvalidSelection(ValueError):
@@ -90,6 +100,7 @@ def _utc_now() -> datetime:
 
 
 def _timestamp(moment: datetime) -> str:
+    """UTC to the second; equal-width strings compare in time order."""
     return moment.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
@@ -100,7 +111,7 @@ def validate_hold_key(key: str) -> str:
 
 
 class ReservationBook:
-    """Decides holds and status changes for one screening and records them in SQLite."""
+    """Decides holds, deadlines and status changes for one screening and records them in SQLite."""
 
     def __init__(
         self,
@@ -109,94 +120,140 @@ class ReservationBook:
         *,
         clock: Callable[[], datetime] = _utc_now,
         lock_timeout: float = LOCK_TIMEOUT_SECONDS,
+        hold_duration: timedelta = DEFAULT_HOLD_DURATION,
     ):
+        if hold_duration <= timedelta(0):
+            raise ValueError("The hold duration must be positive.")
         self._path = database_path
         self._screening = screening
         self._clock = clock
         self._lock_timeout = lock_timeout
+        self._hold_duration = hold_duration
 
     @property
     def screening(self) -> Screening:
         return self._screening
 
+    @property
+    def hold_duration(self) -> timedelta:
+        return self._hold_duration
+
+    def start(self) -> StartReport:
+        """Before serving: give earlier holds a deadline once, then expire holds that are due."""
+        moment = self._now()
+        with self._transaction(write=True) as connection:
+            assigned = connection.execute(
+                "UPDATE reservations SET expires_at = ? WHERE status = ? AND expires_at IS NULL",
+                (_timestamp(moment + self._hold_duration), HELD),
+            ).rowcount
+            expired = self._expire_due(connection, _timestamp(moment))
+        return StartReport(deadlines_assigned=assigned, holds_expired=expired)
+
     def seat_statuses(self) -> list[tuple[str, str]]:
         """Return every seat in layout order: available, held or booked."""
+        now = _timestamp(self._now())
         with self._transaction() as connection:
             rows = connection.execute(
                 "SELECT s.seat_id, r.status FROM reservation_seats AS s "
                 "JOIN reservations AS r USING (reservation_id) "
-                "WHERE s.screening_id = ? AND s.released = 0",
-                (self._screening.screening_id,),
+                "WHERE s.screening_id = ? AND s.released = 0 "
+                "AND (r.status = ? OR (r.status = ? AND (r.expires_at IS NULL OR r.expires_at > ?)))",
+                (self._screening.screening_id, CONFIRMED, HELD, now),
             ).fetchall()
         occupied = {row["seat_id"]: (BOOKED if row["status"] == CONFIRMED else HELD) for row in rows}
         return [(seat, occupied.get(seat, AVAILABLE)) for seat in self._screening.seats]
 
     def place_hold(self, seats: Iterable[str], request_key: str | None = None) -> HoldResult:
-        """Hold every requested seat or none; a recorded key returns its first hold instead."""
+        """Hold every requested seat until a deadline, or none; a recorded key returns its first hold."""
         selection = self._validate(list(seats))
         if request_key is not None:
             validate_hold_key(request_key)
+        moment = self._now()
+        now = _timestamp(moment)
         try:
+            # A refusal is raised after the commit so that the expiry sweep is kept.
             with self._transaction(write=True) as connection:
-                if request_key is not None:
-                    earlier = self._replay(connection, request_key, selection)
-                    if earlier is not None:
-                        return HoldResult(earlier, replayed=True)
-                taken = self._unreleased_seats(connection, selection)
-                if taken:
-                    raise SeatsUnavailable(self._in_layout_order(taken))
-                reservation = Reservation(
-                    reservation_id=str(uuid.uuid4()),
-                    screening_id=self._screening.screening_id,
-                    status=HELD,
-                    seats=selection,
-                    created_at=_timestamp(self._clock()),
-                )
-                connection.execute(
-                    "INSERT INTO reservations (reservation_id, screening_id, status, created_at, request_key) "
-                    "VALUES (?, ?, ?, ?, ?)",
-                    (
-                        reservation.reservation_id,
-                        reservation.screening_id,
-                        reservation.status,
-                        reservation.created_at,
-                        request_key,
-                    ),
-                )
-                connection.executemany(
-                    "INSERT INTO reservation_seats (reservation_id, screening_id, seat_id) VALUES (?, ?, ?)",
-                    [(reservation.reservation_id, reservation.screening_id, seat) for seat in selection],
-                )
-            return HoldResult(reservation, replayed=False)
+                self._expire_due(connection, now)
+                outcome = self._insert_hold(connection, selection, request_key, moment)
         except sqlite3.IntegrityError:
             # The unique indexes back up the checks above; report what they protected.
             with self._transaction() as connection:
                 if request_key is not None:
-                    earlier = self._replay(connection, request_key, selection)
+                    earlier = self._replay(connection, request_key, selection, now)
                     if earlier is not None:
                         return HoldResult(earlier, replayed=True)
                 taken = self._unreleased_seats(connection, selection)
             raise SeatsUnavailable(self._in_layout_order(taken)) from None
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+    def _insert_hold(
+        self,
+        connection: sqlite3.Connection,
+        selection: tuple[str, ...],
+        request_key: str | None,
+        moment: datetime,
+    ) -> HoldResult | Exception:
+        now = _timestamp(moment)
+        if request_key is not None:
+            try:
+                earlier = self._replay(connection, request_key, selection, now)
+            except HoldKeyReused as refusal:
+                return refusal
+            if earlier is not None:
+                return HoldResult(earlier, replayed=True)
+        taken = self._unreleased_seats(connection, selection)
+        if taken:
+            return SeatsUnavailable(self._in_layout_order(taken))
+        reservation = Reservation(
+            reservation_id=str(uuid.uuid4()),
+            screening_id=self._screening.screening_id,
+            status=HELD,
+            seats=selection,
+            created_at=now,
+            expires_at=_timestamp(moment + self._hold_duration),
+        )
+        connection.execute(
+            "INSERT INTO reservations "
+            "(reservation_id, screening_id, status, created_at, request_key, expires_at) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                reservation.reservation_id,
+                reservation.screening_id,
+                reservation.status,
+                reservation.created_at,
+                request_key,
+                reservation.expires_at,
+            ),
+        )
+        connection.executemany(
+            "INSERT INTO reservation_seats (reservation_id, screening_id, seat_id) VALUES (?, ?, ?)",
+            [(reservation.reservation_id, reservation.screening_id, seat) for seat in selection],
+        )
+        return HoldResult(reservation, replayed=False)
 
     def get_reservation(self, reservation_id: str) -> Reservation:
-        """Return the stored reservation with this ID."""
+        """Return the reservation with this ID as it stands now."""
+        now = _timestamp(self._now())
         with self._transaction() as connection:
-            reservation = self._read(connection, "reservation_id", reservation_id)
+            reservation = self._read(connection, "reservation_id", reservation_id, now)
         if reservation is None:
             raise ReservationNotFound(reservation_id)
         return reservation
 
     def find_by_key(self, request_key: str) -> Reservation:
-        """Return the reservation a hold with this key created."""
+        """Return the reservation a hold with this key created, as it stands now."""
         validate_hold_key(request_key)
+        now = _timestamp(self._now())
         with self._transaction() as connection:
-            reservation = self._read(connection, "request_key", request_key)
+            reservation = self._read(connection, "request_key", request_key, now)
         if reservation is None:
             raise HoldKeyNotFound(request_key)
         return reservation
 
     def confirm(self, reservation_id: str) -> Reservation:
-        """Turn a hold into a booking; repeating it changes nothing."""
+        """Turn a hold into a booking before its deadline; repeating it changes nothing."""
         return self._settle(reservation_id, CONFIRMED)
 
     def cancel(self, reservation_id: str) -> Reservation:
@@ -204,34 +261,54 @@ class ReservationBook:
         return self._settle(reservation_id, CANCELLED)
 
     def _settle(self, reservation_id: str, target: str) -> Reservation:
+        now = _timestamp(self._now())
+        # A refusal is raised after the commit so that the expiry sweep is kept.
         with self._transaction(write=True) as connection:
-            current = self._read(connection, "reservation_id", reservation_id)
-            if current is None:
-                raise ReservationNotFound(reservation_id)
-            if current.status == target:
-                return current
-            if current.status != HELD:
-                raise TransitionRefused(current.status, target)
-            connection.execute(
-                "UPDATE reservations SET status = ? WHERE reservation_id = ?", (target, reservation_id)
-            )
-            if target == CANCELLED:
-                connection.execute(
-                    "UPDATE reservation_seats SET released = 1 WHERE reservation_id = ?", (reservation_id,)
-                )
-            return self._read(connection, "reservation_id", reservation_id)
+            self._expire_due(connection, now)
+            outcome = self._apply(connection, reservation_id, target, now)
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+    def _apply(
+        self, connection: sqlite3.Connection, reservation_id: str, target: str, now: str
+    ) -> Reservation | Exception:
+        current = self._read(connection, "reservation_id", reservation_id, now)
+        if current is None:
+            return ReservationNotFound(reservation_id)
+        if current.status == target:
+            return current
+        if current.status != HELD:
+            return TransitionRefused(current.status, target)
+        connection.execute("UPDATE reservations SET status = ? WHERE reservation_id = ?", (target, reservation_id))
+        if target == CANCELLED:
+            connection.execute("UPDATE reservation_seats SET released = 1 WHERE reservation_id = ?", (reservation_id,))
+        return self._read(connection, "reservation_id", reservation_id, now)
+
+    def _expire_due(self, connection: sqlite3.Connection, now: str) -> int:
+        """Mark holds whose deadline has arrived as expired and release their seats."""
+        due = "SELECT reservation_id FROM reservations WHERE status = ? AND expires_at IS NOT NULL AND expires_at <= ?"
+        connection.execute(
+            f"UPDATE reservation_seats SET released = 1 WHERE released = 0 AND reservation_id IN ({due})",
+            (HELD, now),
+        )
+        return connection.execute(
+            "UPDATE reservations SET status = ? WHERE status = ? AND expires_at IS NOT NULL AND expires_at <= ?",
+            (EXPIRED, HELD, now),
+        ).rowcount
 
     def _replay(
-        self, connection: sqlite3.Connection, request_key: str, selection: tuple[str, ...]
+        self, connection: sqlite3.Connection, request_key: str, selection: tuple[str, ...], now: str
     ) -> Reservation | None:
-        earlier = self._read(connection, "request_key", request_key)
+        earlier = self._read(connection, "request_key", request_key, now)
         if earlier is not None and earlier.seats != selection:
             raise HoldKeyReused(request_key)
         return earlier
 
-    def _read(self, connection: sqlite3.Connection, column: str, value: str) -> Reservation | None:
+    def _read(self, connection: sqlite3.Connection, column: str, value: str, now: str) -> Reservation | None:
         row = connection.execute(
-            f"SELECT reservation_id, screening_id, status, created_at FROM reservations WHERE {column} = ?",
+            "SELECT reservation_id, screening_id, status, created_at, expires_at FROM reservations "
+            f"WHERE {column} = ?",
             (value,),
         ).fetchone()
         if row is None:
@@ -242,13 +319,20 @@ class ReservationBook:
                 "SELECT seat_id FROM reservation_seats WHERE reservation_id = ?", (row["reservation_id"],)
             )
         ]
+        status, expires_at = row["status"], row["expires_at"]
+        if status == HELD and expires_at is not None and expires_at <= now:
+            status = EXPIRED  # Due but not yet swept by a write.
         return Reservation(
             reservation_id=row["reservation_id"],
             screening_id=row["screening_id"],
-            status=row["status"],
+            status=status,
             seats=self._in_layout_order(seats),
             created_at=row["created_at"],
+            expires_at=expires_at if status in (HELD, EXPIRED) else None,
         )
+
+    def _now(self) -> datetime:
+        return self._clock().astimezone(UTC).replace(microsecond=0)
 
     def _validate(self, seats: list[str]) -> tuple[str, ...]:
         if not seats:

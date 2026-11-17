@@ -70,10 +70,19 @@ def _upgrade_to_version_2(connection: sqlite3.Connection) -> None:
     )
 
 
+def _upgrade_to_version_3(connection: sqlite3.Connection) -> None:
+    """Milestone 3: hold deadlines. Earlier holds get theirs when the reservation book starts."""
+    connection.execute("ALTER TABLE reservations ADD COLUMN expires_at TEXT")
+    connection.execute(
+        "CREATE INDEX reservations_held_deadline ON reservations (expires_at) WHERE status = 'held'"
+    )
+
+
 # Each step upgrades the file from the previous version to the version it is keyed by.
 MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     1: _create_version_1,
     2: _upgrade_to_version_2,
+    3: _upgrade_to_version_3,
 }
 SCHEMA_VERSION = max(MIGRATIONS)
 

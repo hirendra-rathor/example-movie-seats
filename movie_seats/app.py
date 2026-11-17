@@ -1,8 +1,9 @@
 """Create the Movie Seats HTTP application."""
 
 import os
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
 from html import escape
 from pathlib import Path
 
@@ -15,6 +16,7 @@ from pydantic import BaseModel, Field
 from movie_seats.database import LOCK_TIMEOUT_SECONDS, database_path_from_environment, prepare_database
 from movie_seats.reservations import (
     AVAILABLE,
+    DEFAULT_HOLD_DURATION,
     HoldKeyNotFound,
     HoldKeyReused,
     InvalidHoldKey,
@@ -27,6 +29,22 @@ from movie_seats.reservations import (
     TransitionRefused,
 )
 from movie_seats.screening import SCREENING
+
+HOLD_SECONDS_ENV = "MOVIE_SEATS_HOLD_SECONDS"
+
+
+def hold_seconds_from_environment() -> int:
+    """Read the hold time in seconds; an invalid value stops startup."""
+    raw = os.environ.get(HOLD_SECONDS_ENV)
+    if raw is None or raw.strip() == "":
+        return int(DEFAULT_HOLD_DURATION.total_seconds())
+    try:
+        seconds = int(raw)
+    except ValueError:
+        seconds = 0
+    if seconds <= 0:
+        raise ValueError(f"{HOLD_SECONDS_ENV} must be a positive whole number of seconds, not {raw!r}.")
+    return seconds
 
 
 class HoldRequest(BaseModel):
@@ -46,9 +64,12 @@ class SeatMap(BaseModel):
 class ReservationBody(BaseModel):
     reservation_id: str
     screening_id: str
-    status: str = Field(description="`held`, `confirmed` or `cancelled`.")
+    status: str = Field(description="`held`, `confirmed`, `cancelled` or `expired`.")
     seats: list[str]
     created_at: str
+    expires_at: str | None = Field(
+        description="When a held reservation expires, or expired; null once it is confirmed or cancelled."
+    )
 
 
 class Problem(BaseModel):
@@ -74,6 +95,7 @@ def _reservation_body(reservation: Reservation) -> ReservationBody:
         status=reservation.status,
         seats=list(reservation.seats),
         created_at=reservation.created_at,
+        expires_at=reservation.expires_at,
     )
 
 
@@ -81,14 +103,23 @@ def create_app(
     database_path: str | os.PathLike[str] | None = None,
     *,
     lock_timeout: float = LOCK_TIMEOUT_SECONDS,
+    hold_seconds: int | None = None,
+    clock: Callable[[], datetime] | None = None,
 ) -> FastAPI:
     """Build the application around the reservation book stored at `database_path`."""
     path = Path(database_path) if database_path is not None else database_path_from_environment()
-    book = ReservationBook(path, SCREENING, lock_timeout=lock_timeout)
+    seconds = hold_seconds if hold_seconds is not None else hold_seconds_from_environment()
+    options = {"clock": clock} if clock is not None else {}
+    book = ReservationBook(
+        path, SCREENING, lock_timeout=lock_timeout, hold_duration=timedelta(seconds=seconds), **options
+    )
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        # Upgrade the file, then expire holds whose deadline passed while the service was stopped,
+        # before uvicorn accepts the first request.
         prepare_database(path)
+        book.start()
         yield
 
     app = FastAPI(title="Movie Seats", version="0.1.0", lifespan=lifespan)
@@ -160,7 +191,7 @@ def create_app(
         status_code=201,
         response_model=ReservationBody,
         responses={
-            200: {"model": ReservationBody, "description": "This key already made a hold; it is returned unchanged."},
+            200: {"model": ReservationBody, "description": "This key already made a hold; it is returned as it stands."},
             409: {"model": UnavailableProblem, "description": "Some seats are taken; nothing was held."},
             422: {
                 "model": InvalidSelectionProblem,
@@ -180,7 +211,10 @@ def create_app(
             ),
         ] = None,
     ) -> ReservationBody:
-        """Hold every requested seat together, or none of them. A retried key returns its first hold."""
+        """Hold every requested seat together until `expires_at`, or none of them.
+
+        A retried key returns its first hold.
+        """
         result = book.place_hold(request.seats, request_key=idempotency_key)
         if result.replayed:
             response.status_code = 200
@@ -213,7 +247,7 @@ def create_app(
 
     @app.post("/reservations/{reservation_id}/confirm", response_model=ReservationBody, responses=settle_responses)
     def confirm(reservation_id: str) -> ReservationBody:
-        """Confirm a held reservation as a booking. Repeating the request changes nothing."""
+        """Confirm a held reservation as a booking before it expires. Repeating the request changes nothing."""
         return _reservation_body(book.confirm(reservation_id))
 
     @app.post("/reservations/{reservation_id}/cancel", response_model=ReservationBody, responses=settle_responses)
@@ -267,7 +301,8 @@ def _seat_map_page(book: ReservationBook) -> str:
 {rows}
         <p>Hold seats with <code>POST /holds</code>, then confirm or cancel the hold with
         <code>POST /reservations/{{reservation_id}}/confirm</code> or <code>/cancel</code>.
-        A client that loses a reply can find its hold again with <code>GET /holds/{{key}}</code>.</p>
+        A client that loses a reply can find its hold again with <code>GET /holds/{{key}}</code>.
+        Unconfirmed holds expire {int(book.hold_duration.total_seconds())} seconds after they are made.</p>
         <p><a href="/docs">API documentation</a></p>
     </main>
 </body>

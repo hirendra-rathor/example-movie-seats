@@ -1,8 +1,8 @@
 """Component checks for database setup and migrations in movie_seats.database.
 
-Exercise schema creation, repeat preparation, refusal of a newer schema and
-the upgrade of a file written by the milestone 1 build, against real SQLite
-files.
+Exercise schema creation, repeat preparation, refusal of a newer schema, the
+upgrade of files written by the milestone 1 and milestone 2 builds, and the
+deadline those builds' holds receive at startup, against real SQLite files.
 """
 
 import sqlite3
@@ -11,7 +11,7 @@ import pytest
 
 from movie_seats import database
 from movie_seats.database import SCHEMA_VERSION, SchemaVersionError, prepare_database
-from movie_seats.reservations import CANCELLED, CONFIRMED, HELD, ReservationBook
+from movie_seats.reservations import CANCELLED, CONFIRMED, EXPIRED, HELD, ReservationBook
 from movie_seats.screening import SCREENING
 
 
@@ -25,7 +25,7 @@ def test_new_file_gets_the_current_schema_version(tmp_path):
 
     prepare_database(path)
 
-    assert schema_version(path) == SCHEMA_VERSION == 2
+    assert schema_version(path) == SCHEMA_VERSION == 3
 
 
 def test_preparing_again_keeps_existing_reservations(database_path):
@@ -57,7 +57,7 @@ def test_version_1_file_upgrades_and_keeps_its_hold(version_1_file):
 
     book = ReservationBook(version_1_file, SCREENING)
     reservation = book.get_reservation("v1-hold")
-    assert schema_version(version_1_file) == 2
+    assert schema_version(version_1_file) == 3
     assert reservation.status == HELD
     assert reservation.seats == ("A3", "A4")
     assert reservation.created_at == "2026-11-17T19:20:43Z"
@@ -92,3 +92,46 @@ def test_failed_upgrade_leaves_the_version_1_file_unchanged(version_1_file, monk
         seats = connection.execute("SELECT seat_id FROM reservation_seats ORDER BY seat_id").fetchall()
     assert "request_key" not in columns
     assert seats == [("A3",), ("A4",)]
+
+
+def test_version_2_file_upgrades_and_keeps_every_reservation(version_2_file):
+    prepare_database(version_2_file)
+
+    book = ReservationBook(version_2_file, SCREENING)
+    assert schema_version(version_2_file) == 3
+    assert book.get_reservation("v2-hold").status == HELD
+    assert book.find_by_key("key-v2").reservation_id == "v2-hold"
+    assert book.get_reservation("v2-booking").status == CONFIRMED
+    assert book.get_reservation("v2-cancelled").status == CANCELLED
+    assert dict(book.seat_statuses()) == {
+        **{seat: "available" for seat in SCREENING.seats},
+        "A3": "held",
+        "A4": "held",
+        "B1": "booked",
+    }
+
+
+def test_earlier_holds_get_one_hold_time_from_the_first_start(version_2_file, clock):
+    prepare_database(version_2_file)
+    book = ReservationBook(version_2_file, SCREENING, clock=clock)
+
+    report = book.start()
+    clock.advance(300)
+    again = book.start()
+
+    assert (report.deadlines_assigned, again.deadlines_assigned) == (1, 0)
+    assert book.get_reservation("v2-hold").expires_at == "2026-11-17T12:10:00Z"
+    assert book.get_reservation("v2-booking").expires_at is None
+    clock.advance(300)
+    assert book.get_reservation("v2-hold").status == EXPIRED
+    assert book.get_reservation("v2-booking").status == CONFIRMED
+
+
+def test_version_1_file_upgrades_through_every_step(version_1_file, clock):
+    prepare_database(version_1_file)
+    book = ReservationBook(version_1_file, SCREENING, clock=clock)
+    book.start()
+
+    reservation = book.get_reservation("v1-hold")
+    assert schema_version(version_1_file) == 3
+    assert (reservation.status, reservation.expires_at) == (HELD, "2026-11-17T12:10:00Z")
