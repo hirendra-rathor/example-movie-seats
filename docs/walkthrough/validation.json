@@ -1,0 +1,58 @@
+{
+  "observed_at": "2026-11-17T19:34:29.126377+00:00",
+  "application": {
+    "command": "uv run --locked python -m pytest -q",
+    "passed": 94,
+    "failed": 0,
+    "duration_seconds": 0.4,
+    "implementation_commit": "0e994e4e7c1220ea5568f68b32fe685abf4adb78"
+  },
+  "acceptance": {
+    "milestone_1": "passed",
+    "milestone_2": "passed",
+    "milestone_3": "passed",
+    "container_replacement": "passed",
+    "evidence_directory": "../recordings/03-expiration/"
+  },
+  "documentation": {
+    "result": "passed",
+    "local_links_checked": 160,
+    "prompt_bodies_unchanged": 3,
+    "response_captures_matched": 6,
+    "png_images_checked": 15,
+    "svg_figures_parsed": 6,
+    "readme_introduction": "unchanged",
+    "excluded_files": "absent"
+  },
+  "walkthrough": {
+    "deterministic_render": true,
+    "html_sha256": "32b40cd59da6ebbd15205754199bdc97e34c25a4a4f0b2ed0a130d8f3b165bcd",
+    "offline_browser": "passed; see browser-verification.json",
+    "visual_inspection": "desktop prompt, desktop proposal, mobile proposal and diagram viewer inspected"
+  },
+  "repository": {
+    "branch": "codex/release",
+    "preserved_first_seven": [
+      "81dfa9ff76104dc66b4604c7ea383043f9ee57e5",
+      "edaddef6b4f46260ad0694930af343e4f2dafe11",
+      "439868586540107ecf56e87a7c5e156e62849667",
+      "9af1797ea2e4851319dd4ecc26d104b455d3a570",
+      "4795d7219ed2cad13ce60aa8316d0f63cb35569a",
+      "0e994e4e7c1220ea5568f68b32fe685abf4adb78",
+      "40bcbc5a21befa5f30c3e9ced4520d977207acaf"
+    ],
+    "author_and_committer": "Hirendra Rathor <hirendra-rathor@users.noreply.github.com>",
+    "starter_and_origin_release": "81dfa9ff76104dc66b4604c7ea383043f9ee57e5",
+    "publication": "local only; no push performed",
+    "whitespace_check": "passed"
+  },
+  "design_graph": {
+    "outcome": "blocked before workspace writes; independent review not started",
+    "command": "python -I -m continuous_assurance modeler doctor --install-root ${CODEX_HOME}/skills --format json",
+    "exit_code": 2,
+    "software_release": "0.10.0",
+    "modeler": "compact revision 13",
+    "finding": "Installed ca-design-graph/SKILL.md differs from the installed wheel. The skill requires a passing runtime check before workspace writes.",
+    "prerequisite": "Reconcile the installed skill and software package, then rerun doctor before construction and independent review."
+  }
+}

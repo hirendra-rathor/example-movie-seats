@@ -24,6 +24,13 @@ question from the developer’s request through the proposed design to a check i
 
 ![A booking client asks the Movie Seats service to hold A3 and A4 together. The seat map shows the pair in a twelve-seat screening.](docs/assets/movie-seats-brief.svg)
 
+## Follow the recorded build
+
+Read the [Markdown recordings](docs/recordings/README.md) or open the
+[offline HTML walkthrough](docs/walkthrough/index.html) for the three prompts,
+proposals, diagrams, implementation reports, and working-application screenshots.
+The HTML reader works without starting the service.
+
 ## Work through the example
 
 Install the skills by following the instructions in the [Continuous Assurance repository](https://github.com/hirendra-rathor/continuous-assurance).
@@ -45,11 +52,19 @@ the example from the repository root.
 uv run --locked uvicorn movie_seats.app:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
-Open [Movie Seats](http://127.0.0.1:8000/) in your browser. Run the tests from the same directory.
+Open [the API documentation](http://127.0.0.1:8000/docs) or inspect
+[the screening](http://127.0.0.1:8000/screening). Run the tests from the same directory.
 
 ```sh
 uv run --locked python -m pytest -q
 ```
+
+Reservations are stored in `instance/movie-seats.sqlite3`; set `MOVIE_SEATS_DB` to use another file.
+Holds last 300 seconds by default; `MOVIE_SEATS_HOLD_SECONDS` accepts 1–86400 seconds.
+Existing holds receive a deadline once when upgrading, and confirmed bookings keep their seats.
+
+For a container with persistent storage, run `docker compose up --build`.
+Recreating the container retains its named data volume; deleting that volume deletes its reservations.
 
 ## License
 
