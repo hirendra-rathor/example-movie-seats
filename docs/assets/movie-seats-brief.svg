@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 800 420" width="800" height="420" role="img" aria-labelledby="title desc">
+  <title id="title">Requesting a seat hold from Movie Seats</title>
+  <desc id="desc">A booking client sends one request to the Movie Seats service to hold A3 and A4 together. The screening map highlights the two seats.</desc>
+  <defs>
+    <g id="seat" stroke-width="2">
+      <rect x="-28" y="-23" width="56" height="40" rx="9"/>
+      <path d="M-34 1v17q0 8 8 8h52q8 0 8-8V1" fill="none" stroke-linecap="round"/>
+    </g>
+    <g id="row">
+      <use xlink:href="#seat" x="74"/><use xlink:href="#seat" x="160"/>
+      <use xlink:href="#seat" x="246"/><use xlink:href="#seat" x="332"/>
+    </g>
+  </defs>
+  <rect width="800" height="420" rx="16" fill="#1c3347"/>
+  <path d="M16 0h408v420H16a16 16 0 0 1-16-16V16A16 16 0 0 1 16 0Z" fill="#f5f0e5"/>
+  <path d="M424 12v396" fill="none" stroke="#d7ad74" stroke-width="2" stroke-dasharray="3 9"/>
+  <g font-family="Arial, Helvetica, sans-serif" fill="#263b4a">
+    <path d="M43 63q160-39 320 0" fill="none" stroke="#62818a" stroke-width="4" stroke-linecap="round"/>
+    <text x="203" y="72" text-anchor="middle" font-size="13" font-weight="bold" letter-spacing="3">SCREEN</text>
+    <g fill="#fffcf5" stroke="#7b9093">
+      <use xlink:href="#seat" x="74" y="132"/><use xlink:href="#seat" x="160" y="132"/>
+      <use xlink:href="#row" y="211"/><use xlink:href="#row" y="290"/>
+    </g>
+    <g fill="#1c3347" stroke="#1c3347">
+      <use xlink:href="#seat" x="246" y="132"/><use xlink:href="#seat" x="332" y="132"/>
+    </g>
+    <g text-anchor="middle" font-size="19" font-weight="bold">
+      <text x="74" y="135">A1</text><text x="160" y="135">A2</text>
+      <text x="246" y="135" fill="#ffe0aa">A3</text><text x="332" y="135" fill="#ffe0aa">A4</text>
+      <text x="74" y="214">B1</text><text x="160" y="214">B2</text>
+      <text x="246" y="214">B3</text><text x="332" y="214">B4</text>
+      <text x="74" y="293">C1</text><text x="160" y="293">C2</text>
+      <text x="246" y="293">C3</text><text x="332" y="293">C4</text>
+    </g>
+    <g font-size="17">
+      <rect x="82" y="356" width="16" height="16" rx="4" fill="#fffcf5" stroke="#7b9093" stroke-width="2"/>
+      <text x="109" y="370">Available</text>
+      <rect x="236" y="356" width="16" height="16" rx="4" fill="#1c3347"/>
+      <text x="263" y="370">Held</text>
+    </g>
+    <g fill="#fff9ef">
+      <rect x="460" y="60" width="304" height="76" rx="12" fill="#29465a" stroke="#77929e"/>
+      <g fill="none" stroke="#ffcf87" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="480" y="81" width="43" height="33" rx="4"/>
+        <path d="m488 91 6 6-6 6m12 0h11"/>
+      </g>
+      <text x="542" y="107" font-size="27">Booking client</text>
+
+      <path d="M502 137v112m-9-10 9 10 9-10" fill="none" stroke="#ffcf87" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="530" y="201" fill="#ffcf87" font-size="24">Hold A3 and A4</text>
+
+      <rect x="460" y="258" width="304" height="102" rx="12" fill="#29465a" stroke="#77929e"/>
+      <g fill="none" stroke="#ffcf87" stroke-width="2.5">
+        <rect x="480" y="289" width="43" height="15" rx="3"/>
+        <rect x="480" y="311" width="43" height="15" rx="3"/>
+        <path d="M488 296.5h12m-12 22h12" stroke-linecap="round"/>
+      </g>
+      <text x="542" y="306" font-family="Georgia, serif" font-size="33">Movie Seats</text>
+      <text x="543" y="333" font-size="18">Booking service</text>
+    </g>
+  </g>
+</svg>
