@@ -8,7 +8,7 @@ from threading import Barrier
 
 import pytest
 
-from movie_seats.db import Store
+from movie_seats.db import SCHEMA_VERSION, Store
 from movie_seats.domain import Problem, request_identity, transition
 
 
@@ -131,10 +131,11 @@ def test_version_one_upgrade_preserves_hold_and_allows_completion(tmp_path):
     store = Store(path)
     store.initialize()
     store.initialize()
-    assert store.get(id) == {"id": id, "status": "held", "seats": ["A3", "A4"]}
+    held = store.get(id)
+    assert {key: held[key] for key in ("id", "status", "seats")} == {"id": id, "status": "held", "seats": ["A3", "A4"]}
     assert store.complete(id, "confirmed")["status"] == "confirmed"
     with store.transaction() as connection:
-        assert connection.execute("PRAGMA user_version").fetchone()[0] == 2
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
         assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
         assert connection.execute("SELECT count(*) FROM claims").fetchone()[0] == 2
 

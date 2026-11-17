@@ -128,9 +128,40 @@ def booking(database):
                 "same_key_race_statuses": sorted(item[0] for item in outcomes), "screening": state}
 
 
+def wait_past(deadline):
+    remaining = datetime.fromisoformat(deadline).timestamp() - time.time()
+    if remaining > 30:
+        raise RuntimeError("The acceptance deadline is unexpectedly far away.")
+    time.sleep(max(0, remaining) + 0.1)
+
+
+def expiration(database):
+    body = {"seats": ["A3", "A4"], "request_key": "abandoned"}
+    with server(database, MOVIE_SEATS_HOLD_SECONDS="6") as base:
+        status, abandoned = request(base, "POST", "/reservations", body)
+        assert status == 201 and abandoned["expires_at"]
+        status, kept = request(base, "POST", "/reservations", {"seats": ["B1", "B2"], "request_key": "kept"})
+        assert status == 201
+        status, confirmed = request(base, "POST", f'/reservations/{kept["id"]}/confirm')
+        assert status == 200 and confirmed["status"] == "confirmed"
+    assert time.time() < datetime.fromisoformat(abandoned["expires_at"]).timestamp(), "Server did not stop before the deadline."
+    wait_past(abandoned["expires_at"])
+    with server(database, MOVIE_SEATS_HOLD_SECONDS="300") as base:
+        status, expired = request(base, "GET", f'/reservations/{abandoned["id"]}')
+        assert status == 200 and expired["status"] == "expired"
+        assert expired["expires_at"] == abandoned["expires_at"]
+        assert request(base, "POST", f'/reservations/{abandoned["id"]}/confirm')[0] == 409
+        assert request(base, "POST", "/reservations", body) == (200, expired)
+        assert request(base, "GET", f'/reservations/{kept["id"]}') == (200, confirmed)
+        status, replacement = request(base, "POST", "/reservations", {**body, "request_key": "replacement"})
+        assert status == 201 and replacement["id"] != abandoned["id"]
+        return {"expired": expired, "confirmed": confirmed, "replacement": replacement,
+                "screening": request(base, "GET", "/screening")[1]}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--milestone", type=int, choices=[1, 2], required=True)
+    parser.add_argument("--milestone", type=int, choices=[1, 2, 3], required=True)
     parser.add_argument("--work-dir", type=Path)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
@@ -140,7 +171,7 @@ def main():
         database = directory / "seats.sqlite3"
         if database.exists():
             raise SystemExit("Refusing to overwrite an existing scenario database; choose a new --work-dir.")
-        observations = {1: holds, 2: booking}[args.milestone](database)
+        observations = {1: holds, 2: booking, 3: expiration}[args.milestone](database)
         report = {"milestone": args.milestone, "result": "passed",
                   "observed_at": datetime.now(timezone.utc).isoformat(), "observations": observations}
         rendered = json.dumps(report, indent=2) + "\n"

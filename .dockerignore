@@ -1,0 +1,6 @@
+*
+!movie_seats/
+!movie_seats/*.py
+!pyproject.toml
+!uv.lock
+!.python-version

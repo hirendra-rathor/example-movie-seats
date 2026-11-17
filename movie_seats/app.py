@@ -8,14 +8,19 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
 from .api import APIResponse, register_api
+from .clock import utc_now_us
 from .db import Store
 
 
-def create_app(database_path: str | Path | None = None) -> FastAPI:
+def create_app(database_path: str | Path | None = None, *, clock=utc_now_us) -> FastAPI:
     """Retain the factory entry point; tests supply their own database path."""
+    try:
+        duration = int(os.environ.get("MOVIE_SEATS_HOLD_SECONDS", "300"))
+    except ValueError:
+        raise ValueError("MOVIE_SEATS_HOLD_SECONDS must be an integer from 1 to 86400.") from None
     store = Store(database_path if database_path is not None else os.environ.get(
         "MOVIE_SEATS_DB", "instance/movie-seats.sqlite3"
-    ))
+    ), hold_seconds=duration, clock=clock)
 
     @asynccontextmanager
     async def lifespan(_app):

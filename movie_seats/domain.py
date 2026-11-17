@@ -36,6 +36,8 @@ def transition(current: str, target: str) -> str:
     """Terminal operations can repeat, but cannot reverse one another."""
     if target not in {"confirmed", "cancelled"}:
         raise ValueError("Unknown completion target.")
+    if current == "expired":
+        raise Problem(409, "reservation_expired", "The hold expired and cannot be completed.")
     if current == "held" or current == target:
         return target
     if current in {"confirmed", "cancelled"}:
