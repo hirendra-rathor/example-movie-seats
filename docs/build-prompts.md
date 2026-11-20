@@ -1,33 +1,20 @@
 # Build Movie Seats in three prompts
 
-Give your coding assistant one request at a time. Each prompt describes what a booking client
-should be able to do. Use the assistant’s proposal to review the design decisions and iterate on
-them as you see fit.
-
-Use **Design Proposal** (`ca-design-proposal`) to design each milestone with your
-coding assistant. To select the skill directly, use `$ca-design-proposal` in Codex
-or `/ca-design-proposal` in Claude Code.
-[Get the skill](../README.md#work-through-the-example).
-
 ## Set up the dev environment
 
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then clone this repository,
-create a branch at its `starter` tag, and run the tests. Use the same branch for all three milestones.
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and the **Design Proposal** skill from the [Continuous Assurance repository](https://github.com/hirendra-rathor/continuous-assurance). Clone Movie Seats and run its tests.
 
 ```sh
 git clone https://github.com/hirendra-rathor/example-movie-seats.git
 cd example-movie-seats
-git switch -c build-movie-seats starter
 uv run --locked python -m pytest -q
 ```
 
-uv selects Python 3.12.13 from `.python-version` and installs the dependencies recorded in
-`uv.lock` into the local `.venv` directory. The starter serves a placeholder page and a health
-endpoint; it does not yet implement reservations. See the [run instructions](../README.md#run-the-example-locally).
+You should see `2 passed`. The starter serves a placeholder page and a health endpoint.
 
-Give your assistant one prompt at a time. Review the proposal and its diagrams and ask for any revisions.
-When the design fits, reply, “Approved. Implement this milestone and run its checks”.
-Try the scenario, run `uv run --locked python -m pytest -q`, and commit the result before the next milestone.
+Open this checkout in your coding assistant and paste the first prompt. The prompts use `/ca-design-proposal` for Claude Code. In Codex, change it to `$ca-design-proposal` before sending each prompt.
+
+Review the proposal and its diagrams and ask for any revisions. When the design fits, reply, “Approved. Implement this milestone and run its checks.” Before pasting the next prompt, try the new behavior from a terminal and run `uv run --locked python -m pytest -q`.
 
 ## 1. Hold a complete selection of seats
 
@@ -45,7 +32,7 @@ every seat it requested or no seats at all. When a hold succeeds, I’d like
 the service to return a reservation ID the caller can use to look up the
 reservation, even after the service restarts.
 
-Give me a design proposal [use $ca-design-proposal].
+Give me a design proposal [use /ca-design-proposal].
 ```
 
 ## 2. Confirm or cancel a hold and recover a lost reply
@@ -62,7 +49,7 @@ original hold, the caller should be able to find out whether its seats were
 held and recover the reservation ID. It should also be safe to repeat a
 confirmation or cancellation.
 
-Give me a design proposal [use $ca-design-proposal].
+Give me a design proposal [use /ca-design-proposal].
 ```
 
 ## 3. Release abandoned holds
@@ -82,5 +69,5 @@ Upgrading should preserve reservations made with earlier versions. I’d also
 like to run the service in a container and keep those reservations when we
 replace the container.
 
-Give me a design proposal [use $ca-design-proposal].
+Give me a design proposal [use /ca-design-proposal].
 ```
