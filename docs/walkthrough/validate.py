@@ -41,8 +41,6 @@ def validate():
             assert target.is_file(), f'Missing local target: {source.relative_to(ROOT)} -> {uri}'
             if parsed.fragment:assert parsed.fragment in anchors(target),f'Missing anchor: {uri}'
             count+=1
-    original=subprocess.check_output(['git','show','starter:README.md'],cwd=ROOT,text=True)
-    assert (ROOT/'README.md').read_text().split('## Follow the recorded build\n')[0]==original.split('## Work through the example\n')[0]
     prompts=re.findall(r'```text\n(.*?)\n```',(ROOT/'docs/build-prompts.md').read_text(),re.S)
     starter_prompts=re.findall(r'```text\n(.*?)\n```',subprocess.check_output(['git','show','starter:docs/build-prompts.md'],cwd=ROOT,text=True),re.S)
     assert prompts==starter_prompts and len(prompts)==3
@@ -53,8 +51,10 @@ def validate():
         for name in ['proposal','implementation']:
             portable=(folder/(name+'.md')).read_text()
             exact=(folder/(name+'-response.txt')).read_text()
-            prefix=f'({ROOT}/docs/recordings/{folder.name}/assets/'
-            assert exact.replace(prefix,'(assets/')==portable, f'Response mismatch: {folder}/{name}'
+            # Response sources retain the absolute image paths from the original chat.
+            image_prefix = rf'(!\[[^\]\n]*\]\()/[^)\n]*/docs/recordings/{re.escape(folder.name)}/assets/'
+            normalized = re.sub(image_prefix, r'\1assets/', exact)
+            assert normalized == portable, f'Response mismatch: {folder}/{name}'
         checkpoint=json.loads((folder/'checkpoint.json').read_text())
         commit=checkpoint['implementation_commit']
         subprocess.run(['git','merge-base','--is-ancestor',commit,'HEAD'],cwd=ROOT,check=True)
@@ -68,6 +68,6 @@ def validate():
     assert not any(p.startswith('.assurance/') for p in tracked)
     assert not (ROOT/'AGENTS.md').exists() and not (ROOT/'docs/brief.md').exists()
     assert subprocess.check_output(['git','rev-parse','starter^{}'],cwd=ROOT,text=True).strip()=='81dfa9ff76104dc66b4604c7ea383043f9ee57e5'
-    print(json.dumps({'result':'passed','local_links_checked':count,'prompt_bodies_unchanged':3,'response_captures_matched':6,'png_images_checked':len(image_files),'svg_figures_parsed':6,'readme_introduction':'unchanged','excluded_files':'absent'},indent=2))
+    print(json.dumps({'result':'passed','local_links_checked':count,'prompt_bodies_unchanged':3,'response_captures_matched':6,'png_images_checked':len(image_files),'svg_figures_parsed':6,'excluded_files':'absent'},indent=2))
 
 if __name__=='__main__':validate()

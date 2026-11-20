@@ -92,9 +92,9 @@ def render():
                 body='<p class="source-note">Recorded prompt · unchanged from the build guide</p><button class="copy-button" data-copy="m'+str(number)+'-prompt-text">Copy prompt</button><pre id="m'+str(number)+'-prompt-text" class="prompt"><code>'+escape(prompt.strip())+'</code></pre>'
             elif stage=='evidence':
                 body=f'<p class="source-note">Editorial evidence index · recorded observations remain available below</p><div class="evidence-grid"><div><b>{checkpoint["tests"]["passed"]}</b><span>tests passed at this checkpoint</span></div><div><b>Passed</b><span>real-process acceptance</span></div></div>'
-                body+='<p>Implementation checkpoint <code>'+commit+'</code>. These new commits are local until explicitly published.</p><pre><code>git switch --detach '+commit+'</code></pre>'
+                body+=f'<p>To inspect this implementation checkpoint in a separate checkout, run</p><pre><code>git switch --detach {commit}</code></pre>'
                 files=['checkpoint.json','acceptance.json','screenshots.json','figures.json']
-                files += [p.name for p in folder.glob('*regression.json')]
+                files += sorted(p.name for p in folder.glob('*regression.json'))
                 if (folder/'previous-scenario.json').exists():files.append('previous-scenario.json')
                 if (folder/'container-acceptance.json').exists():files.append('container-acceptance.json')
                 body+='<ul class="file-list">'+''.join(f'<li><a href="../recordings/{directory}/{name}">{escape(name)}</a></li>' for name in files)+'</ul>'

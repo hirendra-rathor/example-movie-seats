@@ -27,4 +27,4 @@ The script writes screenshots to a temporary directory and records its observed 
 
 ## Source checkpoints
 
-The starter and each milestone implementation/recording pair are preserved as the first seven commits. This reader and the final README form commit 8. Future presentation refinements may be consolidated after milestone 3's recording without rewriting those first seven commits. The new implementation identifiers are local until explicitly published.
+The `codex` branch starts at the shared `starter` commit. Each milestone has an implementation commit followed by a recording commit. The [milestone index](../recordings/README.md) identifies the implementation revision for each chapter.

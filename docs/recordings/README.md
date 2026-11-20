@@ -1,6 +1,6 @@
-# The fresh Movie Seats build
+# Movie Seats — the Codex build
 
-These recordings document the new build on `codex/release`, beginning at the approved `starter` checkpoint. Implementation and recording are separate commits. Commit links resolve on GitHub only after the user publishes this run; the same identifiers work locally now.
+Codex built Movie Seats from the [three prompts](../build-prompts.md), beginning at the shared `starter` commit. Each chapter links to the implementation commit and the recorded checks. To follow the same chapters offline, open the [HTML walkthrough](../walkthrough/index.html) in a browser from your checkout.
 
 | Milestone | Recording | Implementation |
 | --- | --- | --- |
@@ -14,7 +14,7 @@ The milestone prompts are copied verbatim from the build guide. Each proposal an
 
 The user granted standing authorization to proceed from each completed proposal to implementation. The preliminary draft was discarded at the user's request before implementation; only the restarted proposals are included. No separate approval message is invented.
 
-Every proposal uses the installed Design Proposal skill, identified by [the installed-file hashes](skill-binding.json), against the current release source. No historical implementation, historical response, or assurance construction record is part of these release checkpoints. No working Design Graph was needed.
+Each proposal used the installed Design Proposal skill against that milestone’s source. The [skill record](skill-binding.json) identifies the version by file hash. The [release verification](../walkthrough/validation.json) records the tooling check that blocked Design Graph construction and independent review after milestone three.
 
 Overview and collaboration images are explanatory proposal diagrams. Other images are browser screenshots of working application responses. Each milestone includes structured acceptance observations, screenshot provenance, editable SVG figures and their data. Render a proposal's SVG files with `python docs/recordings/render_diagrams.py docs/recordings/01-holds`; PNG files are exported display copies. The [capture utility](capture_browser.cjs) uses Playwright and Chromium and captures the service without altering its page content.
 
