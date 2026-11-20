@@ -4,7 +4,7 @@
 
 **Checkpoint.** Implementation commit
 [`5bed9eb`](https://github.com/hirendra-rathor/example-movie-seats/commit/5bed9ebbf12706659ff95e1bb3af6055b6b0b517)
-(`5bed9ebbf12706659ff95e1bb3af6055b6b0b517`) on `claude/release`. Browse the
+(`5bed9ebbf12706659ff95e1bb3af6055b6b0b517`) on `claude`. Browse the
 [code at this checkpoint](https://github.com/hirendra-rathor/example-movie-seats/tree/5bed9ebbf12706659ff95e1bb3af6055b6b0b517).
 
 *Editorial.* The third milestone gives every hold a deadline and runs the service in a

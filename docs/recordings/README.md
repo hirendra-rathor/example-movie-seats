@@ -13,9 +13,9 @@ rehearsal of the acceptance scenario and screenshots of the running service.
   skill tool. The installed skill's marker file reads `ca-design-proposal:v1`, and its
   `SKILL.md` has SHA-256 `53aa66d233dd8cd4b0ecbcbbe846580db2cbfa0eed1d80da915dfefef9c240b2`.
   No other version information was available.
-- **Starting point.** Branch `claude/release` starts at the shared starter commit
-  `81dfa9ff76104dc66b4604c7ea383043f9ee57e5` (tag `starter`), the same root as the Codex build
-  on `codex/release`. This build does not reuse that build's implementation, tests or recordings.
+- **Starting point.** The `claude` and `codex` branches share the starter commit
+  `81dfa9ff76104dc66b4604c7ea383043f9ee57e5` (tag `starter`). Claude Code implemented
+  and tested each milestone in its own build.
 - **Authorization.** The developer's task instruction gave standing authorization to proceed
   from each completed proposal to implementation without a separate approval. No separate
   approval message exists, and none is shown in these chapters.
@@ -33,8 +33,8 @@ rehearsal of the acceptance scenario and screenshots of the running service.
   rendered PNG.
 - **Screenshots** are captures of the running service in headless Chrome. They are not diagrams.
 
-Checkpoint links point to this branch's implementation commits on GitHub. They resolve once the
-branch is pushed; the full commit IDs identify the same checkpoints locally.
+Each chapter links to its implementation commit on GitHub. Use the same commit ID to
+inspect or run that checkpoint in a local checkout.
 
 ## Chapters
 

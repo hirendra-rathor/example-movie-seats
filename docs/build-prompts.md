@@ -1,33 +1,4 @@
-# Build Movie Seats in three prompts
-
-Give your coding assistant one request at a time. Each prompt describes what a booking client
-should be able to do. Use the assistant’s proposal to review the design decisions and iterate on
-them as you see fit.
-
-Use **Design Proposal** (`ca-design-proposal`) to design each milestone with your
-coding assistant. To select the skill directly, use `$ca-design-proposal` in Codex
-or `/ca-design-proposal` in Claude Code.
-[Get the skill](../README.md#work-through-the-example).
-
-## Set up the dev environment
-
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then clone this repository,
-create a branch at its `starter` tag, and run the tests. Use the same branch for all three milestones.
-
-```sh
-git clone https://github.com/hirendra-rathor/example-movie-seats.git
-cd example-movie-seats
-git switch -c build-movie-seats starter
-uv run --locked python -m pytest -q
-```
-
-uv selects Python 3.12.13 from `.python-version` and installs the dependencies recorded in
-`uv.lock` into the local `.venv` directory. The starter serves a placeholder page and a health
-endpoint; it does not yet implement reservations. See the [run instructions](../README.md#run-the-example-locally).
-
-Give your assistant one prompt at a time. Review the proposal and its diagrams and ask for any revisions.
-When the design fits, reply, “Approved. Implement this milestone and run its checks”.
-Try the scenario, run `uv run --locked python -m pytest -q`, and commit the result before the next milestone.
+# Movie Seats prompts used by Claude Code
 
 ## 1. Hold a complete selection of seats
 

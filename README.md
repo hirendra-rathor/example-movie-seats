@@ -1,84 +1,9 @@
-# Movie Seats
+# Movie Seats — Claude Code implementation
 
-> **Disclaimer:** This repository is an educational example for showcasing the methodology
-> of using Continuous Assurance skills. It is not a booking application intended for actual
-> use. The code, build prompts, and recorded walkthrough demonstrate design, implementation,
-> and verification through a small example scenario; they are not intended for real bookings
-> or production use.
+Claude Code built this movie seat reservation service from three prompts using the Continuous Assurance Design Proposal skill. You can hold a group of seats, confirm or cancel the reservation, and recover the result if a reply is lost. An abandoned hold expires even if the service restarts.
 
-The [Continuous Assurance repository](https://github.com/hirendra-rathor/continuous-assurance)
-provides two skills for applying a design methodology with a coding assistant.
-The skills use six design perspectives to connect what a user expects with the parts of the system
-responsible for that behavior and the tests that show whether it works.
+The FastAPI application is in `movie_seats/` and its tests are in `tests/`. Run them with `uv run --locked python -m pytest -q`. The [milestone records](docs/recordings/README.md) show the prompts, proposals, and results.
 
-- **Design Proposal** helps you compare a requested change with current behavior, review the design
-  decisions, and agree on how to verify the result before implementation.
-- **Explore Design** helps you understand how the system works today by tracing a question through
-  its code, tests, and documentation.
-
-Movie Seats uses reservations for a movie screening as an example scenario for applying
-these skills. The runnable tutorial code uses FastAPI and SQLite to demonstrate seat availability,
-holds, confirmation, cancellation, and expiration. If a caller asks for two seats together,
-what must the example service check before it can book them together? You can follow that
-question from the developer’s request through the proposed design to a check in the running example.
-
-![A booking client asks the Movie Seats service to hold A3 and A4 together. The seat map shows the pair in a twelve-seat screening.](docs/assets/movie-seats-brief.svg)
-
-## Work through the example
-
-Install the skills by following the instructions in the [Continuous Assurance repository](https://github.com/hirendra-rathor/continuous-assurance).
-
-Use the [three build prompts](docs/build-prompts.md) to work through the Movie Seats example
-one milestone at a time. First, hold a complete selection of seats. Then confirm or cancel
-a hold and recover a lost reply. Finally, release abandoned holds across service restarts.
-
-Give your coding assistant one prompt at a time. Review the proposal, ask for any changes
-you want, and then have the assistant implement the agreed design. Try the behavior yourself
-and run the tests before moving to the next prompt.
-
-## Run the example locally
-
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and then start
-the example from the repository root.
-
-```sh
-uv run --locked uvicorn movie_seats.app:create_app --factory --host 127.0.0.1 --port 8000
-```
-
-Open [Movie Seats](http://127.0.0.1:8000/) in your browser. Run the tests from the same directory.
-
-```sh
-uv run --locked python -m pytest -q
-```
-
-Reservations are stored in `instance/movie-seats.sqlite3`; set `MOVIE_SEATS_DATABASE` to use
-another file. Unconfirmed holds expire after 600 seconds; set `MOVIE_SEATS_HOLD_SECONDS` to change
-the hold time.
-
-## Run the example in a container
-
-Build the image and start a container with a named volume for the reservations. A replacement
-container started on the same volume keeps them.
-
-```sh
-docker build --tag movie-seats .
-docker volume create movie-seats-data
-docker run --detach --name movie-seats --publish 127.0.0.1:8000:8000 \
-  --volume movie-seats-data:/data movie-seats
-```
-
-To replace the container, remove it and run the same `docker run` command again.
-
-```sh
-docker rm --force movie-seats
-```
-
-The container check builds the image and replaces a container. It runs only when you ask for it.
-
-```sh
-MOVIE_SEATS_CONTAINER_TESTS=1 uv run --locked python -m pytest -q tests/test_container.py
-```
-
-## License
+For the methodology behind this educational example, read [Enforcing Design Methodology with Coding Assistants](https://hirendra-rathor.github.io/articles/enforcing-design-methodology-with-coding-assistants/).
 
 The application and tutorial materials are available under the [MIT License](LICENSE).

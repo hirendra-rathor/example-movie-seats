@@ -4,7 +4,7 @@
 
 **Checkpoint.** Implementation commit
 [`bcc365b`](https://github.com/hirendra-rathor/example-movie-seats/commit/bcc365bda6609b11d87fe2aa7c5f0026bca28a76)
-(`bcc365bda6609b11d87fe2aa7c5f0026bca28a76`) on `claude/release`. Browse the
+(`bcc365bda6609b11d87fe2aa7c5f0026bca28a76`) on `claude`. Browse the
 [code at this checkpoint](https://github.com/hirendra-rathor/example-movie-seats/tree/bcc365bda6609b11d87fe2aa7c5f0026bca28a76).
 
 *Editorial.* The second milestone lets a client settle a hold, by confirming or cancelling it,

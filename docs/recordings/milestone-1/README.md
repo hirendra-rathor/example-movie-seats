@@ -4,7 +4,7 @@
 
 **Checkpoint.** Implementation commit
 [`5bcba37`](https://github.com/hirendra-rathor/example-movie-seats/commit/5bcba370df64f4a8f06761b2f77cafd3460e542c)
-(`5bcba370df64f4a8f06761b2f77cafd3460e542c`) on `claude/release`. Browse the
+(`5bcba370df64f4a8f06761b2f77cafd3460e542c`) on `claude`. Browse the
 [code at this checkpoint](https://github.com/hirendra-rathor/example-movie-seats/tree/5bcba370df64f4a8f06761b2f77cafd3460e542c).
 
 *Editorial.* The first milestone turns the starter's placeholder service into a seat-holding API.
