@@ -12,7 +12,7 @@ The [Continuous Assurance repository](https://github.com/hirendra-rathor/continu
 
 For an introduction to the methodology behind these skills, read [Enforcing Design Methodology with Coding Assistants](https://hirendra-rathor.github.io/articles/enforcing-design-methodology-with-coding-assistants/).
 
-Movie Seats uses seat reservations for a movie screening as an example scenario for applying Continuous Assurance skills to software design, implementation, and verification. The [Movie Seats walkthrough](https://github.com/hirendra-rathor/example-movie-seats/blob/claude/docs/recordings/README.md) shows the prompts we gave Claude Code, the proposals and diagrams it produced with the Design Proposal skill, and screenshots of the service at each milestone.
+Movie Seats uses seat reservations for a movie screening as an example scenario for applying Continuous Assurance skills to software design, implementation, and verification. The [Movie Seats walkthrough](https://github.com/hirendra-rathor/hirendra-rathor.github.io/blob/93ade4f720bb2510a2e210dd76b107500b11924f/examples/movie-seats/README.md) shows the prompts we gave Claude Code, the proposals and diagrams it produced with the Design Proposal skill, and screenshots of the service at each milestone.
 
 ![A booking client asks the Movie Seats service to hold A3 and A4 together. The seat map shows the pair in a twelve-seat screening.](docs/assets/movie-seats-brief.svg)
 
