@@ -12,7 +12,7 @@ uv run --locked python -m pytest -q
 
 You should see `2 passed`. The starter serves a placeholder page and a health endpoint.
 
-Open this checkout in your coding assistant and paste the first prompt. The prompts use `/ca-design-proposal` for Claude Code. In Codex, change it to `$ca-design-proposal` before sending each prompt.
+Open this starter checkout in your coding assistant. The prompts below use `/ca-design-proposal` for Claude Code. In Codex, use `$ca-design-proposal` in its place, or copy the [prompts formatted for Codex](https://github.com/hirendra-rathor/example-movie-seats/blob/codex/docs/build-prompts.md).
 
 Review the proposal and its diagrams and ask for any revisions. When the design fits, reply, “Approved. Implement this milestone and run its checks.” Before pasting the next prompt, try the new behavior from a terminal and run `uv run --locked python -m pytest -q`.
 

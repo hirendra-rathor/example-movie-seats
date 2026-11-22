@@ -16,7 +16,7 @@ Movie Seats uses seat reservations for a movie screening as an example scenario 
 
 ![A booking client asks the Movie Seats service to hold A3 and A4 together. The seat map shows the pair in a twelve-seat screening.](docs/assets/movie-seats-brief.svg)
 
-The [`codex` branch](https://github.com/hirendra-rathor/example-movie-seats/tree/codex) contains the implementation built with Codex, and the [`claude` branch](https://github.com/hirendra-rathor/example-movie-seats/tree/claude) contains the implementation built with Claude Code.
+The walkthrough follows the Claude Code implementation on the [`claude` branch](https://github.com/hirendra-rathor/example-movie-seats/tree/claude). The [`codex` branch](https://github.com/hirendra-rathor/example-movie-seats/tree/codex) contains the implementation Codex built from the same three prompts.
 
 ## Work through the example
 
