@@ -25,7 +25,7 @@ A booking client needs to hold an entire party’s seat selection and recover th
 
 ![Six-perspective proposal: green marks new subjects, blue marks changed subjects, and gray marks unchanged context.](assets/01-holds/overview.svg)
 
-**Milestone 1 — comparison baseline.** The approved starter `81dfa9f` serves a page and `/health`; its two smoke tests pass. There is no screening, reservation, or database. This proposal introduces those responsibilities from that source baseline. The overview connects the group’s intentions to allocation rules, responsible components, exchanges, durable facts, and distinguishing checks.
+**Milestone 1 — comparison baseline.** The shared `starter` checkpoint serves a page and `/health`; its two smoke tests pass. There is no screening, reservation, or database. This proposal introduces those responsibilities from that source baseline. The overview connects the group’s intentions to allocation rules, responsible components, exchanges, durable facts, and distinguishing checks.
 
 ![Collaboration: the client calls the API, selection validation precedes allocation, and SQLite commits the complete hold. Green marks new subjects and blue marks changed subjects.](assets/01-holds/collaboration.svg)
 
@@ -69,7 +69,7 @@ Run the suite with `uv run --locked python -m pytest -q` and the terminal scenar
 
 ## Recorded implementation report
 
-Milestone 1 is implemented in commit `edaddef6b4f46260ad0694930af343e4f2dafe11`: a client can inspect twelve seats, hold a complete selection, and recover the reservation after restarting the service.
+Milestone 1 is implemented in the commit tagged `codex-milestone-1`: a client can inspect twelve seats, hold a complete selection, and recover the reservation after restarting the service.
 
 The implementation follows the proposal’s module boundaries. `domain.py` validates selection meaning; `db.py` owns versioned SQLite state and atomic allocation; `api.py` translates requests and failures; `app.py` initializes the configured store. The original page and health contract remain intact. JSON responses are formatted for terminal and browser inspection.
 
@@ -91,15 +91,16 @@ The milestone’s implementation is committed separately from this recording. I 
 
 ## Repeat the checks
 
-To run this milestone as recorded, check out `edaddef` in a separate clone and run the following from the repository root.
+From the root of a separate clone, run the checks at the recorded checkpoint.
 
 ```sh
+git switch --detach codex-milestone-1
 uv run --locked python -m pytest -q
 uv run --locked python scripts/acceptance.py --milestone 1
 ```
 
 The acceptance script starts separate service processes. It checks that A3 and A4 stay together across a restart, that a conflicting request leaves A2 free, and that only one caller wins B1.
 
-[Implementation commit](https://github.com/hirendra-rathor/example-movie-seats/commit/edaddef6b4f46260ad0694930af343e4f2dafe11) · [Original response files and acceptance data](https://github.com/hirendra-rathor/example-movie-seats/tree/439868586540107ecf56e87a7c5e156e62849667/docs/recordings/01-holds)
+[Milestone 1 implementation](../../../../tree/codex-milestone-1) · [Original response files and acceptance data](../../../../tree/codex-milestone-1-recording/docs/recordings/01-holds)
 
 [Recording index](README.md)

@@ -2,7 +2,7 @@
 
 Codex built this movie seat reservation service from three prompts using the Continuous Assurance Design Proposal skill. You can hold a group of seats, confirm or cancel the reservation, and recover the result if a reply is lost. An abandoned hold expires even if the service restarts.
 
-The FastAPI application is in `movie_seats/` and its tests are in `tests/`. Run them with `uv run --locked python -m pytest -q`. The [milestone records](docs/milestones/README.md) document this Codex build. The [Movie Seats walkthrough](https://github.com/hirendra-rathor/hirendra-rathor.github.io/blob/93ade4f720bb2510a2e210dd76b107500b11924f/examples/movie-seats/README.md) follows the implementation on the `claude` branch.
+The FastAPI application is in `movie_seats/` and its tests are in `tests/`. Run them with `uv run --locked python -m pytest -q`. The [milestone records](docs/milestones/README.md) document this Codex build. The [Movie Seats walkthrough](https://github.com/hirendra-rathor/hirendra-rathor.github.io/blob/codex/integrate-movie-seats-walkthrough/examples/movie-seats/README.md) follows the implementation on the `claude` branch.
 
 For the methodology behind this educational example, read [Enforcing Design Methodology with Coding Assistants](https://hirendra-rathor.github.io/articles/enforcing-design-methodology-with-coding-assistants/).
 

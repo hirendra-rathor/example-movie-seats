@@ -26,7 +26,7 @@ Booking clients need abandoned holds to release their seats on time, while opera
 
 ![Six-perspective proposal for durable expiration, upgrade policy and container recovery. Green marks additions, blue changes, and gray retained guarantees.](assets/03-expiration/overview.svg)
 
-**Milestone 3 — comparison baseline.** Fresh implementation `9af1797` has durable holds, confirmation, cancellation, keyed recovery, version-2 migration, and 66 passing tests. Its stored reservations have no deadline. `Store.get` and `screening` read without changing state, and `complete` can confirm any held reservation regardless of elapsed time. No container packaging exists.
+**Milestone 3 — comparison baseline.** The `codex-milestone-2` implementation has durable holds, confirmation, cancellation, keyed recovery, version-2 migration, and 66 passing tests. Its stored reservations have no deadline. `Store.get` and `screening` read without changing state, and `complete` can confirm any held reservation regardless of elapsed time. No container packaging exists.
 
 ![Collaboration: acquire SQLite's write lock, sample the UTC clock, expire due holds, then execute the caller's operation. The data volume survives replacement.](assets/03-expiration/collaboration.svg)
 
@@ -67,7 +67,7 @@ Run `uv run --locked python -m pytest -q` and `uv run --locked python scripts/ac
 
 ## Recorded implementation report
 
-Milestone 3 is implemented in commit `0e994e4e7c1220ea5568f68b32fe685abf4adb78`: holds now have persisted deadlines, expire across downtime, and survive container replacement through a retained data volume.
+Milestone 3 is implemented in the commit tagged `codex-milestone-3`: holds now have persisted deadlines, expire across downtime, and survive container replacement through a retained data volume.
 
 The implementation uses absolute UTC microseconds and evaluates time after acquiring SQLite’s write lock. At the deadline, a held reservation expires and releases its complete selection. Confirmed bookings retain their claims. Creation retries retain the original deadline and cannot renew or resurrect an expired hold.
 
@@ -93,9 +93,10 @@ The actual Docker Compose scenario also passed. It built the locked image, ran t
 
 ## Repeat the checks
 
-To run this milestone as recorded, check out `0e994e4` in a separate clone and run the following from the repository root.
+From the root of a separate clone, run the checks at the recorded checkpoint.
 
 ```sh
+git switch --detach codex-milestone-3
 uv run --locked python -m pytest -q
 uv run --locked python scripts/acceptance.py --milestone 3
 uv run --locked python scripts/container_acceptance.py
@@ -103,6 +104,6 @@ uv run --locked python scripts/container_acceptance.py
 
 The process rehearsal restarts the service after a deadline. The Docker check replaces the container on the same volume and verifies that the expired seats can be held again while the confirmed booking survives.
 
-[Implementation commit](https://github.com/hirendra-rathor/example-movie-seats/commit/0e994e4e7c1220ea5568f68b32fe685abf4adb78) · [Original response files and acceptance data](https://github.com/hirendra-rathor/example-movie-seats/tree/40bcbc5a21befa5f30c3e9ced4520d977207acaf/docs/recordings/03-expiration)
+[Milestone 3 implementation](../../../../tree/codex-milestone-3) · [Original response files and acceptance data](../../../../tree/codex-milestone-3-recording/docs/recordings/03-expiration)
 
 [Recording index](README.md) · [Previous milestone](02-booking.md)

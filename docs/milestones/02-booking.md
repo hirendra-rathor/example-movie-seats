@@ -23,7 +23,7 @@ A booking client needs to finish or release its held seats and recover a lost re
 
 ![Six-perspective proposal for booking completion and durable retry identity. Green marks additions, blue changes, and gray retained context.](assets/02-booking/overview.svg)
 
-**Milestone 2 — comparison baseline.** Fresh implementation `edaddef` provides atomic holds, durable ID lookup, and 33 passing tests. Its `Store.hold` creates a new reservation for every successful unkeyed call, and every reservation remains held. Its immutable requested-seat rows and separate active claims provide the basis for safe completion and replay.
+**Milestone 2 — comparison baseline.** The `codex-milestone-1` implementation provides atomic holds, durable ID lookup, and 33 passing tests. Its `Store.hold` creates a new reservation for every successful unkeyed call, and every reservation remains held. Its immutable requested-seat rows and separate active claims provide the basis for safe completion and replay.
 
 ![Collaboration for key recovery and terminal actions: the API delegates decisions to the reservation service and SQLite commits related effects together.](assets/02-booking/collaboration.svg)
 
@@ -71,7 +71,7 @@ Run `uv run --locked python -m pytest -q`. Run `uv run --locked python scripts/a
 
 ## Recorded implementation report
 
-Milestone 2 is implemented in commit `9af1797ea2e4851319dd4ecc26d104b455d3a570`: clients can confirm or cancel holds and recover keyed creation requests after a lost reply or restart.
+Milestone 2 is implemented in the commit tagged `codex-milestone-2`: clients can confirm or cancel holds and recover keyed creation requests after a lost reply or restart.
 
 A creation request can now include `request_key`. First creation returns 201; equivalent retries return 200 with the same reservation ID and current state. Reordered seats are equivalent. Reusing a key for different seats returns 409. Existing keyless requests remain accepted, with their original recovery limits.
 
@@ -97,15 +97,16 @@ I will now use this fresh implementation as the baseline for the expiration prop
 
 ## Repeat the checks
 
-To run this milestone as recorded, check out `9af1797` in a separate clone and run the following from the repository root.
+From the root of a separate clone, run the checks at the recorded checkpoint.
 
 ```sh
+git switch --detach codex-milestone-2
 uv run --locked python -m pytest -q
 uv run --locked python scripts/acceptance.py --milestone 2
 ```
 
 The rehearsal upgrades an earlier hold, discards a keyed creation reply, restarts the service, and retrieves the same reservation. Concurrent retries must return one reservation ID.
 
-[Implementation commit](https://github.com/hirendra-rathor/example-movie-seats/commit/9af1797ea2e4851319dd4ecc26d104b455d3a570) · [Original response files and acceptance data](https://github.com/hirendra-rathor/example-movie-seats/tree/4795d7219ed2cad13ce60aa8316d0f63cb35569a/docs/recordings/02-booking)
+[Milestone 2 implementation](../../../../tree/codex-milestone-2) · [Original response files and acceptance data](../../../../tree/codex-milestone-2-recording/docs/recordings/02-booking)
 
 [Recording index](README.md) · [Previous milestone](01-holds.md)
