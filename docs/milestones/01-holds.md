@@ -69,11 +69,11 @@ Run the suite with `uv run --locked python -m pytest -q` and the terminal scenar
 
 ## Recorded implementation report
 
-Milestone 1 is implemented in the commit tagged `codex-milestone-1`: a client can inspect twelve seats, hold a complete selection, and recover the reservation after restarting the service.
+In milestone 1, a client can inspect twelve seats, hold a complete selection, and recover the reservation after restarting the service.
 
 The implementation follows the proposal’s module boundaries. `domain.py` validates selection meaning; `db.py` owns versioned SQLite state and atomic allocation; `api.py` translates requests and failures; `app.py` initializes the configured store. The original page and health contract remain intact. JSON responses are formatted for terminal and browser inspection.
 
-**Observed verification:** `uv run --locked python -m pytest -q` passed **33 tests**. The checks include independent SQLite writers, a bounded lock timeout, rollback after an injected write failure, malformed HTTP requests, and refusal to overwrite unrecognized database files.
+**Recorded verification.** At milestone 1, `uv run --locked python -m pytest -q` passed **33 tests**. The checks include independent SQLite writers, a bounded lock timeout, rollback after an injected write failure, malformed HTTP requests, and refusal to overwrite unrecognized database files.
 
 The real-process acceptance scenario passed: A3+A4 were recovered under the same reservation ID after stopping and restarting Uvicorn; A2+A3 returned 409 while A2 remained available; two concurrent clients using separate server processes produced exactly one 201 and one 409 for B1.
 
@@ -91,16 +91,13 @@ The milestone’s implementation is committed separately from this recording. I 
 
 ## Repeat the checks
 
-From the root of a separate clone, run the checks at the recorded checkpoint.
+From the repository root on the `codex` branch, run the full test suite and the seat-hold scenario.
 
 ```sh
-git switch --detach codex-milestone-1
 uv run --locked python -m pytest -q
 uv run --locked python scripts/acceptance.py --milestone 1
 ```
 
 The acceptance script starts separate service processes. It checks that A3 and A4 stay together across a restart, that a conflicting request leaves A2 free, and that only one caller wins B1.
-
-[Milestone 1 implementation](../../../../tree/codex-milestone-1) · [Original response files and acceptance data](../../../../tree/codex-milestone-1-recording/docs/recordings/01-holds)
 
 [Recording index](README.md)
