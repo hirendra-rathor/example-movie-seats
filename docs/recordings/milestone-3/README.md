@@ -13,7 +13,7 @@ hold made by the previous build that must survive the upgrade and then expire on
 
 ## Prompt
 
-The third prompt from the [build guide](../../build-prompts.md), exactly as written there:
+The [third build prompt](../../build-prompts.md#3-release-abandoned-holds) is shown here with Claude Code’s skill command.
 
 ```text
 Movie Seats now lets clients confirm or cancel a hold. I’d like each new
@@ -30,7 +30,7 @@ Upgrading should preserve reservations made with earlier versions. I’d also
 like to run the service in a container and keep those reservations when we
 replace the container.
 
-Give me a design proposal [use $ca-design-proposal].
+Give me a design proposal [use /ca-design-proposal].
 ```
 
 *Editorial note.* Claude Code invoked the Design Proposal skill (`ca-design-proposal`) through

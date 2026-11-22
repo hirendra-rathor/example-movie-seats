@@ -14,7 +14,7 @@ be confirmable after the upgrade.
 
 ## Prompt
 
-The second prompt from the [build guide](../../build-prompts.md), exactly as written there:
+The [second build prompt](../../build-prompts.md#2-confirm-or-cancel-a-hold-and-recover-a-lost-reply) is shown here with Claude Code’s skill command.
 
 ```text
 Movie Seats can now hold seats and return a reservation ID. I’d like a
@@ -28,7 +28,7 @@ original hold, the caller should be able to find out whether its seats were
 held and recover the reservation ID. It should also be safe to repeat a
 confirmation or cancellation.
 
-Give me a design proposal [use $ca-design-proposal].
+Give me a design proposal [use /ca-design-proposal].
 ```
 
 *Editorial note.* Claude Code invoked the Design Proposal skill (`ca-design-proposal`) through

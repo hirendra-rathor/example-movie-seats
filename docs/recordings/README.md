@@ -1,9 +1,9 @@
 # Movie Seats: the Claude Code build
 
-This folder records how Claude Code built Movie Seats from the
-[three build prompts](../build-prompts.md), one milestone at a time. Each chapter keeps the
-exact prompt, the design proposal and its figures, the implementation report, a terminal
-rehearsal of the acceptance scenario and screenshots of the running service.
+The Movie Seats walkthrough follows the implementation on the `claude` branch.
+Each chapter starts with a [prompt formatted for Claude Code](../build-prompts.md)
+and includes the recorded proposal and diagrams, implementation report, terminal
+acceptance checks, and screenshots of the running service.
 
 ## About this build
 

@@ -14,7 +14,7 @@ seats at the same time.
 
 ## Prompt
 
-The first prompt from the [build guide](../../build-prompts.md), exactly as written there:
+The [first build prompt](../../build-prompts.md#1-hold-a-complete-selection-of-seats) is shown here with Claude Code’s skill command.
 
 ```text
 I’d like to build a small movie booking service called Movie Seats.
@@ -30,11 +30,10 @@ every seat it requested or no seats at all. When a hold succeeds, I’d like
 the service to return a reservation ID the caller can use to look up the
 reservation, even after the service restarts.
 
-Give me a design proposal [use $ca-design-proposal].
+Give me a design proposal [use /ca-design-proposal].
 ```
 
-*Editorial note.* The bracketed `[use $ca-design-proposal]` is the guide's Codex spelling of the
-skill reference. Claude Code invoked the Design Proposal skill (`ca-design-proposal`) through its
+*Editorial note.* Claude Code invoked the Design Proposal skill (`ca-design-proposal`) through its
 skill tool with the argument `Milestone 1 of docs/build-prompts.md: Hold a complete selection of
 seats`, and the proposal answers the prompt above.
 

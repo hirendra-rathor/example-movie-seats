@@ -1,5 +1,7 @@
 # Movie Seats prompts used by Claude Code
 
+The prompts below use Claude Code’s `/ca-design-proposal` command. Only the skill prefix differs from the [prompts in the original build guide](https://github.com/hirendra-rathor/example-movie-seats/blob/81dfa9ff76104dc66b4604c7ea383043f9ee57e5/docs/build-prompts.md).
+
 ## 1. Hold a complete selection of seats
 
 ```text
@@ -16,7 +18,7 @@ every seat it requested or no seats at all. When a hold succeeds, I’d like
 the service to return a reservation ID the caller can use to look up the
 reservation, even after the service restarts.
 
-Give me a design proposal [use $ca-design-proposal].
+Give me a design proposal [use /ca-design-proposal].
 ```
 
 ## 2. Confirm or cancel a hold and recover a lost reply
@@ -33,7 +35,7 @@ original hold, the caller should be able to find out whether its seats were
 held and recover the reservation ID. It should also be safe to repeat a
 confirmation or cancellation.
 
-Give me a design proposal [use $ca-design-proposal].
+Give me a design proposal [use /ca-design-proposal].
 ```
 
 ## 3. Release abandoned holds
@@ -53,5 +55,5 @@ Upgrading should preserve reservations made with earlier versions. I’d also
 like to run the service in a container and keep those reservations when we
 replace the container.
 
-Give me a design proposal [use $ca-design-proposal].
+Give me a design proposal [use /ca-design-proposal].
 ```
