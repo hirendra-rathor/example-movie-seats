@@ -1,6 +1,6 @@
 # Movie Seats prompts used by Claude Code
 
-The prompts below use Claude Code’s `/ca-design-proposal` command. Only the skill prefix differs from the [prompts in the original build guide](../../../blob/starter/docs/build-prompts.md).
+The prompts below use Claude Code’s `/ca-design-proposal` command. Follow the [setup instructions on `main`](../../../blob/main/docs/build-prompts.md#set-up-the-dev-environment) to clone the starter and run its tests.
 
 ## 1. Hold a complete selection of seats
 
