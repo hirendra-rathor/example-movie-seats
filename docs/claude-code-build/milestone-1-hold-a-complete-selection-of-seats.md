@@ -1,13 +1,13 @@
 # Milestone 1: Hold a complete selection of seats
 
-*Claude Code build.* [Recording index](README.md) · Built from the shared starter · [Implementation `5bcba37`](https://github.com/hirendra-rathor/example-movie-seats/commit/5bcba370df64f4a8f06761b2f77cafd3460e542c)
+*Claude Code build.* [Recording index](README.md) · Built from the shared starter · [Milestone 1 implementation](../../../../tree/claude-milestone-1) · [Original recording](../../../../tree/claude-milestone-1-recording/docs/recordings/milestone-1)
 
 The first milestone turns the starter's placeholder service into a seat-holding API.
 A booking client lists the twelve seats, holds a selection all or nothing, and looks the hold
 up by reservation ID after a restart. The decisive case is two clients asking for overlapping
 seats at the same time.
 
-**How to read this chapter.** The quoted proposal and implementation report reproduce Claude Code’s responses. The terminal output and screenshots come from the running service.
+**How to read this chapter.** The quoted proposal and implementation report use the milestone tags for Git revisions. The terminal output and screenshots come from the running service.
 
 ## Prompt
 
@@ -42,7 +42,7 @@ The editable proposal figures are the [six-perspective overview](assets/mileston
 >
 > ![Milestone 1 overview in six perspective columns. The booking client calls the changed Movie Seats API, which runs the changed create_app routes; they delegate to a new reservation book that claims all seats in one transaction, backed by new reservation, reserved-seat and schema-version state in a new SQLite database. New tests cover the race for A4, the HTTP contract and a restart lookup. Gray means context, blue means changed and green means new.](assets/milestone-1/diagrams/overview.png)
 >
-> **Comparison baseline.** I compared against the starter commit `81dfa9f` on `claude/release`. In `movie_seats/app.py`, `create_app()` serves a placeholder page at `/` and `GET /health`. There are no seats, reservations or database yet. `pyproject.toml` already pins FastAPI and uvicorn, and `.gitignore` already excludes `instance/`. Apart from the health route and the app factory, everything below is new.
+> **Comparison baseline.** I compared against the shared `starter` checkpoint on `claude/release`. In `movie_seats/app.py`, `create_app()` serves a placeholder page at `/` and `GET /health`. There are no seats, reservations or database yet. `pyproject.toml` already pins FastAPI and uvicorn, and `.gitignore` already excludes `instance/`. Apart from the health route and the app factory, everything below is new.
 >
 > ### Domain
 >
@@ -134,7 +134,7 @@ approval message was sent, and none is recorded here.
 
 ## Implementation report (recorded)
 
-> I implemented the milestone 1 proposal in commit `5bcba37` on `claude/release`. The commit holds application code and tests only; the recording files stay out of it.
+> I implemented the milestone 1 proposal in the commit tagged `claude-milestone-1` on `claude/release`. The commit holds application code and tests only; the recording files stay out of it.
 >
 > ### What changed
 >

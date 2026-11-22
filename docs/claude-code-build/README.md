@@ -12,11 +12,11 @@ This folder records the independent Claude Code implementation of the three mile
 
 ## Starting point
 
-The `claude` and `codex` branches share the `starter` commit, `81dfa9f`. Claude Code built Movie Seats from the starter and the three prompts. Each milestone has an implementation commit followed by a recording commit. Each chapter links to the implementation it describes.
+The `starter` tag marks the shared starting point of `claude` and `codex`. Each milestone has two tags. For milestone 1, `claude-milestone-1` identifies the implementation and `claude-milestone-1-recording` identifies the following commit with the original session records. To run that implementation in a separate clone, use `git switch --detach claude-milestone-1`.
 
 ## How these recordings were made
 
-- **Recorded responses.** Quoted passages reproduce the proposal and implementation report presented during the build. The proposal images use paths in this edition. The branch was named `claude/release` during the session.
+- **Recorded responses.** Quoted passages use the milestone tags for Git revisions and this edition’s paths for proposal images. Each chapter links to the original session recording. The branch was named `claude/release` during the session.
 - **Prompts and authorization.** The prompt blocks use Claude Code’s `/ca-design-proposal` command. The developer gave standing authorization to implement each completed proposal.
 - **Terminal checks and images.** Each chapter preserves the commands and output from its acceptance rehearsal. The proposal diagrams are available as SVG and PNG. The screenshots show the running service at the point described in their captions.
 
