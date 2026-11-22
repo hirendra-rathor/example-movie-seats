@@ -2,7 +2,7 @@
 
 Three prompts develop the shared starter into a service for holding and booking movie seats. Each chapter contains the recorded proposal, the implementation report, screenshots of the running API, and commands for repeating the checks.
 
-The test counts in the chapters come from the original build sessions. Each milestone has an implementation commit followed by a recording commit with the original responses, figures, screenshots, and acceptance data. [Codex branch history](../../../../commits/codex/)
+The test counts in the chapters come from the original build sessions. Each milestone has an implementation commit followed by a recording commit with the original responses, figures, screenshots, and acceptance data. This edition uses portable paths in the recordings and links to the corresponding commits in this repository. [Codex branch history](../../../../commits/codex/)
 
 | Milestone | Reading and evidence |
 | --- | --- |
