@@ -12,11 +12,11 @@ This folder records the independent Claude Code implementation of the three mile
 
 ## Starting point
 
-The `starter` tag marks the shared starting point of `claude` and `codex`. Each milestone has two tags. For milestone 1, `claude-milestone-1` identifies the implementation and `claude-milestone-1-recording` identifies the following commit with the original session records. To run that implementation in a separate clone, use `git switch --detach claude-milestone-1`.
+The `claude` and `codex` branches share the `starter` tag. Each milestone has an implementation commit with the code and tests, followed by a recording commit with the original session files. [Claude branch history](../../../../commits/claude/)
 
 ## How these recordings were made
 
-- **Recorded responses.** Quoted passages use the milestone tags for Git revisions and this edition’s paths for proposal images. Each chapter links to the original session recording. The branch was named `claude/release` during the session.
+- **Recorded responses.** The chapters quote Claude Code’s proposals and implementation reports. The edited passages identify revisions by milestone and link to the published figures. The branch was named `claude/release` during the session.
 - **Prompts and authorization.** The prompt blocks use Claude Code’s `/ca-design-proposal` command. The developer gave standing authorization to implement each completed proposal.
 - **Terminal checks and images.** Each chapter preserves the commands and output from its acceptance rehearsal. The proposal diagrams are available as SVG and PNG. The screenshots show the running service at the point described in their captions.
 

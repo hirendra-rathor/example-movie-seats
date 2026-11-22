@@ -1,12 +1,12 @@
 # Milestone 3: Release abandoned holds
 
-*Claude Code build.* [Recording index](README.md) · Built from milestone 2 · [Milestone 3 implementation](../../../../tree/claude-milestone-3) · [Original recording](../../../../tree/claude-milestone-3-recording/docs/recordings/milestone-3)
+*Claude Code build.* [Recording index](README.md) · Built from [milestone 2](milestone-2-confirm-or-cancel-a-hold-and-recover-a-lost-reply.md)
 
 The third milestone gives every hold a deadline and runs the service in a
 container. The decisive cases are a deadline that passes while no container is running, and a
 hold made by the previous build that must survive the upgrade and then expire on its own.
 
-**How to read this chapter.** The quoted proposal and implementation report use the milestone tags for Git revisions. The terminal output and screenshots come from the running service.
+**How to read this chapter.** The quoted proposal and implementation report identify revisions by milestone. The terminal output and screenshots come from the running service.
 
 ## Prompt
 
@@ -33,7 +33,7 @@ Give me a design proposal [use /ca-design-proposal].
 *Editorial note.* Claude Code invoked the Design Proposal skill (`ca-design-proposal`) through
 its skill tool with the argument `Milestone 3 of docs/build-prompts.md: Release abandoned holds`,
 and the proposal answers the prompt above. The comparison baseline was the milestone 2
-implementation tagged `claude-milestone-2`.
+implementation.
 
 ## Design proposal (recorded)
 
@@ -43,7 +43,7 @@ The editable proposal figures are the [six-perspective overview](assets/mileston
 >
 > ![Milestone 3 overview in six perspective columns. The intention to free abandoned seats needs timed holds, constrained by the rule that downtime counts; the intention to upgrade safely needs durable storage provided by a new data volume. A new container runs the changed Movie Seats API, whose changed routes and reservation book expire due holds under the write lock, set deadlines on reservations and release reserved seats; database setup migrates to version 3. New runtime settings set the hold time. New checks cover the version 2 upgrade, restarts and container swaps, HTTP expiry and the expiry boundary. Gray means context, blue means changed and green means new.](assets/milestone-3/diagrams/overview.png)
 >
-> **Comparison baseline.** Milestone 2 implementation (`claude-milestone-2`). A hold stores `created_at` but no deadline. In `movie_seats/reservations.py`, `seat_statuses()` treats every unreleased seat of a held reservation as taken, and only `cancel()` releases seats, so an abandoned hold keeps its seats forever. `prepare_database()` applies `MIGRATIONS` up to version 2, `create_app()` reads only `MOVIE_SEATS_DATABASE`, and the repository has no container definition.
+> **Comparison baseline.** In the milestone 2 implementation, a hold stores `created_at` but no deadline. In `movie_seats/reservations.py`, `seat_statuses()` treats every unreleased seat of a held reservation as taken, and only `cancel()` releases seats, so an abandoned hold keeps its seats forever. `prepare_database()` applies `MIGRATIONS` up to version 2, `create_app()` reads only `MOVIE_SEATS_DATABASE`, and the repository has no container definition.
 >
 > ### Domain
 >
@@ -142,7 +142,7 @@ approval message was sent, and none is recorded here.
 
 ## Implementation report (recorded)
 
-> I implemented the milestone 3 proposal in the commit tagged `claude-milestone-3` on `claude/release`, building on `claude-milestone-2`. The commit holds the application code, tests, `Dockerfile`, `.dockerignore` and the README's new run instructions.
+> I implemented the milestone 3 proposal on `claude/release`, building on the milestone 2 implementation. The commit holds the application code, tests, `Dockerfile`, `.dockerignore` and the README's new run instructions.
 >
 > ### What changed
 >
@@ -160,7 +160,7 @@ approval message was sent, and none is recorded here.
 > - `MOVIE_SEATS_CONTAINER_TESTS=1 uv run --locked python -m pytest -q`: **80 passed** (16.97 s), including an image build and a container replacement.
 > - The four race checks passed in 8 repeated runs after the final change.
 > - **Container rehearsal** with a 60 s hold time:
->   - I ran the milestone 2 build (`claude-milestone-2`) from a temporary worktree on a copy of the milestone 2 rehearsal database and held C1, C2 under key `milestone-2-hold`.
+>   - I ran the milestone 2 build from a temporary worktree on a copy of the milestone 2 rehearsal database and held C1, C2 under key `milestone-2-hold`.
 >   - I seeded a new volume with that file and started container 1. The file reported `user_version` 3. The milestone 1 reservation `c2bb69ce-…` was still `confirmed`. The milestone 2 hold received `expires_at` 19:49:54, 60 s after startup, and a new hold for A1, A2 returned **201** with the same deadline.
 >   - I removed container 1 at 19:49:03 and started container 2 on the same volume at 19:50:06, after both deadlines had passed.
 >   - The first `GET /seats` showed only A3 and A4 booked. Both holds read `expired`, confirming the new one returned **409** `expired`, and C1, C2 could be held again (**201**). The stored rows showed `expired`, so the startup sweep had written them, not only derived them.
@@ -181,7 +181,7 @@ approval message was sent, and none is recorded here.
 ### Terminal acceptance rehearsal
 
 *Editorial.* To have a hold made by the previous build, Claude Code checked out the milestone 2
-implementation tagged `claude-milestone-2` in a temporary worktree and ran it on port 8001 against a copy
+implementation in a temporary worktree and ran it on port 8001 against a copy
 of the database left by the milestone 2 rehearsal. That database already held the milestone 1
 reservation `c2bb69ce-…` (confirmed in milestone 2) and the cancelled reservation `eef506c4-…`.
 

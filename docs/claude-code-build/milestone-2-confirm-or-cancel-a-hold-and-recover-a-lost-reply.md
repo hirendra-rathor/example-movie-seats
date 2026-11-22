@@ -1,13 +1,13 @@
 # Milestone 2: Confirm or cancel a hold and recover a lost reply
 
-*Claude Code build.* [Recording index](README.md) · Built from milestone 1 · [Milestone 2 implementation](../../../../tree/claude-milestone-2) · [Original recording](../../../../tree/claude-milestone-2-recording/docs/recordings/milestone-2)
+*Claude Code build.* [Recording index](README.md) · Built from [milestone 1](milestone-1-hold-a-complete-selection-of-seats.md)
 
 The second milestone lets a client settle a hold, by confirming or cancelling it,
 and recover when a reply goes missing. The decisive cases are a hold whose 201 never reaches
 the client, retried after a restart, and a hold made by the milestone 1 build that must still
 be confirmable after the upgrade.
 
-**How to read this chapter.** The quoted proposal and implementation report use the milestone tags for Git revisions. The terminal output and screenshots come from the running service.
+**How to read this chapter.** The quoted proposal and implementation report identify revisions by milestone. The terminal output and screenshots come from the running service.
 
 ## Prompt
 
@@ -31,7 +31,7 @@ Give me a design proposal [use /ca-design-proposal].
 *Editorial note.* Claude Code invoked the Design Proposal skill (`ca-design-proposal`) through
 its skill tool with the argument `Milestone 2 of docs/build-prompts.md: Confirm or cancel a hold
 and recover a lost reply`, and the proposal answers the prompt above. The comparison baseline
-was the milestone 1 implementation tagged `claude-milestone-1`.
+was the milestone 1 implementation.
 
 ## Design proposal (recorded)
 
@@ -41,7 +41,7 @@ The editable proposal figures are the [six-perspective overview](assets/mileston
 >
 > ![Milestone 2 overview in six perspective columns. Rules for one-way status and one key per hold protect the intentions to settle a hold and to retry safely, which need the capability to settle and recover. The changed Movie Seats API runs changed routes and a changed reservation book that records status and key on the reservation; cancel releases reserved seats; database setup migrates the schema from version 1 to 2. The new Idempotency-Key header is sent with POST /holds. New checks cover key replay, a lost reply across a restart, status transitions and the version 1 upgrade. Blue means changed and green means new.](assets/milestone-2/diagrams/overview.png)
 >
-> **Comparison baseline.** Milestone 1 implementation (`claude-milestone-1`). `ReservationBook.place_hold()` in `movie_seats/reservations.py` always inserts a new reservation under a fresh UUID, so a retried `POST /holds` after a lost 201 gets 409 for its own seats and the caller can't learn its reservation ID. Reservations stay `held`: no operation changes status, and the `UNIQUE (screening_id, seat_id)` constraint on `reservation_seats` would stop a released seat from being reserved again. `prepare_database()` in `movie_seats/database.py` creates schema version 1 and refuses anything newer; there is no upgrade path.
+> **Comparison baseline.** In the milestone 1 implementation, `ReservationBook.place_hold()` in `movie_seats/reservations.py` always inserts a new reservation under a fresh UUID, so a retried `POST /holds` after a lost 201 gets 409 for its own seats and the caller can't learn its reservation ID. Reservations stay `held`: no operation changes status, and the `UNIQUE (screening_id, seat_id)` constraint on `reservation_seats` would stop a released seat from being reserved again. `prepare_database()` in `movie_seats/database.py` creates schema version 1 and refuses anything newer; there is no upgrade path.
 >
 > ### Domain
 >
@@ -136,7 +136,7 @@ approval message was sent, and none is recorded here.
 
 ## Implementation report (recorded)
 
-> I implemented the milestone 2 proposal in the commit tagged `claude-milestone-2` on `claude/release`, building on `claude-milestone-1`. The commit holds application code and tests only.
+> I implemented the milestone 2 proposal on `claude/release`, building on the milestone 1 implementation. The commit holds application code and tests only.
 >
 > ### What changed
 >
